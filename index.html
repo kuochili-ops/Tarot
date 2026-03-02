@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Tarot Final</title>
+    <title>Gemini Tarot Final Fix</title>
     <style>
         :root { --gold: #f1c40f; --night: #0a0a12; }
         body { background: #0a0a12; color: #eee; font-family: sans-serif; text-align: center; padding: 20px; margin: 0; }
@@ -31,10 +31,10 @@
 </head>
 <body>
 
-    <h2 style="color:var(--gold)">聖三角塔羅 (全牌圖版)</h2>
+    <h2 style="color:var(--gold)">聖三角塔羅 (全圖修正版)</h2>
     
     <div class="panel">
-        <input type="text" id="q" placeholder="請輸入您的問題..." value="我今日的綜合運勢？">
+        <input type="text" id="q" placeholder="請默想問題..." value="我今日的綜合運勢？">
         <br>
         <button id="btn" onclick="run()">抽取啟示</button>
     </div>
@@ -45,12 +45,13 @@
         <div class="card-box"><div class="label">未來</div><div class="card-inner" id="c2"><div class="face back">✦</div><div class="face front"><img id="img2"></div></div></div>
     </div>
 
-    <div class="loading" id="loader">✨ 正在連結 Gemini 智慧核心...</div>
+    <div class="loading" id="loader">✨ 正在連結宇宙訊號...</div>
     <div id="result"></div>
 
 <script>
-    // 重要：請在此替換為您新建立的 API Key
+    // ⚠ 重要：請替換為您在 AI Studio 重新產生的新 Key
     const API_KEY = "AIzaSyB8qB6mg5MFG9qMHJMJEpQv5mTaxtSi2yU"; 
+    // 使用 v1 穩定路徑
     const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
     async function run() {
@@ -63,7 +64,7 @@
         resBox.style.display = 'none';
 
         try {
-            // 1. 抽取 3 張隨機牌卡
+            // 1. 抽牌邏輯
             const tarotRes = await fetch("https://tarotapi.dev/api/v1/cards/random?n=3");
             const tarotData = await tarotRes.json();
             const cards = tarotData.cards;
@@ -75,17 +76,14 @@
                 const node = document.getElementById(`c${i}`);
                 const img = document.getElementById(`img${i}`);
                 
-                // 圖片路徑：對接 TarotQA 畫廊格式
-                const cardID = cards[i].name_short.toLowerCase();
-                img.src = `https://tarotqa.com/img/tarot/${cardID}.jpg`;
+                // 圖片路徑優化：對齊 TarotQA 的結構
+                const cardCode = cards[i].name_short.toLowerCase();
+                img.src = `https://tarotqa.com/img/tarot/${cardCode}.jpg`;
                 
-                // 備援機制：如果載入失敗，顯示牌名文字
                 img.onerror = function() {
-                    this.style.display = 'none';
-                    this.parentElement.innerHTML = `<div style="padding:20px; color:#333; font-weight:bold; font-size:0.8rem;">${cards[i].name}</div>`;
+                    this.parentElement.innerHTML = `<div style="padding:15px; color:#222; font-size:0.8rem; font-weight:bold;">${cards[i].name}</div>`;
                 };
 
-                // 觸發翻牌動畫
                 node.classList.remove('flipped', 'reversed');
                 setTimeout(() => {
                     node.classList.add(isRev ? 'reversed' : 'flipped');
@@ -94,12 +92,12 @@
                 spreadInfo.push(`${['過去','現在','未來'][i]}位：${cards[i].name}(${isRev?'逆位':'正位'})`);
             }
 
-            // 2. 請求 AI 解讀
+            // 2. AI 請求邏輯
             loader.style.display = 'block';
             const aiRes = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: `你是一位專業塔羅老師。問題：${question}。牌陣：${spreadInfo.join('，')}。請給予一段約 150 字、充滿溫度的解讀。` }] }] })
+                body: JSON.stringify({ contents: [{ parts: [{ text: `你是一位專業塔羅老師。問題：${question}。牌陣：${spreadInfo.join('，')}。請給予一段約 150 字解讀。` }] }] })
             });
 
             const aiData = await aiRes.json();
@@ -107,13 +105,14 @@
             if (aiData.candidates && aiData.candidates[0]) {
                 const text = aiData.candidates[0].content.parts[0].text;
                 resBox.innerHTML = `<b style="color:var(--gold)">🔮 大師解析：</b><br>${text}`;
-                resBox.style.display = 'block';
             } else {
-                throw new Error(aiData.error ? aiData.error.message : "API 權限異常，請確認是否更換了新的 Key。");
+                throw new Error(aiData.error ? aiData.error.message : "API Key 已被停用，請至 AI Studio 更新。");
             }
+            
+            resBox.style.display = 'block';
 
         } catch (err) {
-            resBox.innerHTML = `<span style="color:#ff6b6b">連線狀態：${err.message}</span>`;
+            resBox.innerHTML = `<span style="color:#ff6b6b">錯誤提示：${err.message}</span>`;
             resBox.style.display = 'block';
         } finally {
             loader.style.display = 'none';
