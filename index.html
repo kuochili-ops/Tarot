@@ -31,7 +31,7 @@
 </head>
 <body>
 
-    <h2 style="color:var(--gold)">聖三角塔羅 (Gemini 最終修復)</h2>
+    <h2 style="color:var(--gold)">聖三角塔羅 (通訊協議修復)</h2>
     
     <div class="panel">
         <input type="text" id="q" placeholder="你想問什麼？" value="我今日的綜合運勢？">
@@ -45,28 +45,26 @@
         <div class="card-box"><div class="label">未來</div><div class="tarot-inner" id="c2"><div class="face back">✦</div><div class="face front"><img id="img2"></div></div></div>
     </div>
 
-    <div id="loader" class="loading">✨ 正在連結宇宙訊號...</div>
+    <div id="loader" class="loading">✨ 宇宙訊號對接中...</div>
     <div id="result"></div>
 
 <script>
 /**
- * 完整大阿爾克那對照註解
+ * 完整大阿爾克那對照
  */
 const TAROT_MAP = {
-    "ar00": "愚者 (The Fool)", "ar01": "魔術師 (The Magician)", "ar02": "女祭司 (The High Priestess)",
-    "ar03": "皇后 (The Empress)", "ar04": "皇帝 (The Emperor)", "ar05": "教皇 (The Hierophant)",
-    "ar06": "戀人 (The Lovers)", "ar07": "戰車 (The Chariot)", "ar08": "力量 (Strength)",
-    "ar09": "隱士 (The Hermit)", "ar10": "命運之輪 (Wheel of Fortune)", "ar11": "正義 (Justice)",
-    "ar12": "吊人 (The Hanged Man)", "ar13": "死神 (Death)", "ar14": "節制 (Temperance)",
-    "ar15": "惡魔 (The Devil)", "ar16": "高塔 (The Tower)", "ar17": "星星 (The Star)",
-    "ar18": "月亮 (The Moon)", "ar19": "太陽 (The Sun)", "ar20": "審判 (Judgement)", "ar21": "世界 (The World)"
+    "ar00": "愚者", "ar01": "魔術師", "ar02": "女祭司", "ar03": "皇后", "ar04": "皇帝",
+    "ar05": "教皇", "ar06": "戀人", "ar07": "戰車", "ar08": "力量", "ar09": "隱士",
+    "ar10": "命運之輪", "ar11": "正義", "ar12": "吊人", "ar13": "死神", "ar14": "節制",
+    "ar15": "惡魔", "ar16": "高塔", "ar17": "星星", "ar18": "月亮", "ar19": "太陽",
+    "ar20": "審判", "ar21": "世界"
 };
 
 const app = {
-    // ⚠ 請在此貼入你的 Google API Key
-    API_KEY: "AIzaSyATSUCodL_2qQVtRNjDyLSLlANWlDZCDtQ",
-    // 修正後的模型路徑
-    API_URL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent",
+    // ⚠ 請在此填入你的 Google API Key
+    API_KEY: "在此貼入你的_Gemini_Key",
+    // 針對 v1beta 路徑的標準模型名稱格式
+    API_URL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
 
     UI: {
         flip: (i, isRev) => {
@@ -105,9 +103,9 @@ const app = {
                 cardNames.push(`${cnName}(${isRev?'逆位':'正位'})`);
             }
 
-            // 2. Gemini API 請求 (最新模型路徑)
+            // 2. 使用 gemini-pro 確保穩定請求
             loader.style.display = 'block';
-            const prompt = `你是一位專業塔羅占卜師。問題：${document.getElementById('q').value}。牌陣：過去是${cardNames[0]}、現在是${cardNames[1]}、未來是${cardNames[2]}。請給予一段約 150 字的溫暖繁體中文解讀。`;
+            const prompt = `你是一位繁體中文塔羅大師。問題：${document.getElementById('q').value}。牌陣：過去是${cardNames[0]}、現在是${cardNames[1]}、未來是${cardNames[2]}。請給予一段約 150 字的溫暖解讀。`;
 
             const response = await fetch(`${this.API_URL}?key=${this.API_KEY}`, {
                 method: "POST",
@@ -118,13 +116,18 @@ const app = {
             const aiData = await response.json();
 
             if (aiData.error) throw new Error(aiData.error.message);
+            
+            // 檢查回傳結構
+            if (!aiData.candidates || !aiData.candidates[0].content) {
+                throw new Error("宇宙訊號微弱，請稍後再試。");
+            }
 
             const speech = aiData.candidates[0].content.parts[0].text;
             resBox.innerHTML = `<b style="color:var(--gold)">🔮 大師啟示：</b><br>${speech}`;
             resBox.style.display = 'block';
 
         } catch (err) {
-            resBox.innerHTML = `<span style="color:#ff6b6b">❌ 故障原因：<br>${err.message}</span>`;
+            resBox.innerHTML = `<span style="color:#ff6b6b">❌ 修復提示：<br>${err.message}</span>`;
             resBox.style.display = 'block';
         } finally {
             loader.style.display = 'none';
