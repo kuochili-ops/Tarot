@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tarot Insight Final</title>
+    <title>Tarot Insight v16.0</title>
     <style>
         :root { --gold: #f1c40f; --night: #0a0a12; }
         body { background: var(--night); color: #eee; font-family: sans-serif; text-align: center; padding: 20px; margin: 0; }
@@ -30,10 +30,10 @@
 </head>
 <body>
 
-    <h2 style="color:var(--gold)">聖三角塔羅 (正式上線)</h2>
+    <h2 style="color:var(--gold)">聖三角塔羅 (連線最終對策)</h2>
     
     <div class="panel">
-        <input type="text" id="q" placeholder="你想問什麼？" value="我今日的綜合運勢？">
+        <input type="text" id="q" placeholder="請輸入您的問題..." value="我今日的綜合運勢？">
         <br>
         <button id="btn" onclick="app.run()">開始占卜</button>
     </div>
@@ -44,12 +44,12 @@
         <div class="card-box"><div class="label">未來</div><div class="tarot-inner" id="c2"><div class="face back">✦</div><div class="face front"><img id="img2"></div></div></div>
     </div>
 
-    <div id="loader" class="loading">✨ 宇宙訊息下載中...</div>
+    <div id="loader" class="loading">✨ 宇宙意識連結中...</div>
     <div id="result"></div>
 
 <script>
 /**
- * 完整牌面名稱註解
+ * 完整牌面名稱註解與對照
  */
 const TAROT_MAP = {
     "ar00": "愚者", "ar01": "魔術師", "ar02": "女祭司", "ar03": "皇后", "ar04": "皇帝",
@@ -62,8 +62,9 @@ const TAROT_MAP = {
 const app = {
     // ⚠ 請在此填入你的 Google API Key
     API_KEY: "AIzaSyATSUCodL_2qQVtRNjDyLSLlANWlDZCDtQ",
-    // 切換到正式版 v1 路徑與 flash 1.5
-    API_URL: "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent",
+    
+    // 使用最核心的模型路徑
+    API_URL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent",
 
     UI: {
         flip: (i, isRev) => {
@@ -102,9 +103,9 @@ const app = {
                 cardNames.push(`${cnName}(${isRev?'逆位':'正位'})`);
             }
 
-            // 2. 使用正式版 API 請求
+            // 2. AI 請求
             loader.style.display = 'block';
-            const prompt = `你是一位繁體中文塔羅大師。問題：${document.getElementById('q').value}。牌陣：過去是${cardNames[0]}、現在是${cardNames[1]}、未來是${cardNames[2]}。請給予一段約 150 字的溫暖解讀。`;
+            const prompt = `你是一位繁體中文塔羅師。問題：${document.getElementById('q').value}。牌陣：過去${cardNames[0]}、現在${cardNames[1]}、未來${cardNames[2]}。請給予一段約 150 字的解讀。`;
 
             const response = await fetch(`${this.API_URL}?key=${this.API_KEY}`, {
                 method: "POST",
@@ -117,7 +118,7 @@ const app = {
             if (aiData.error) throw new Error(`${aiData.error.status}: ${aiData.error.message}`);
             
             if (!aiData.candidates || !aiData.candidates[0].content) {
-                throw new Error("宇宙連線不穩，請再點擊一次試試。");
+                throw new Error("宇宙回傳格式異常，請再試一次。");
             }
 
             const speech = aiData.candidates[0].content.parts[0].text;
@@ -125,7 +126,7 @@ const app = {
             resBox.style.display = 'block';
 
         } catch (err) {
-            resBox.innerHTML = `<span style="color:#ff6b6b">❌ 故障排查：<br>${err.message}</span>`;
+            resBox.innerHTML = `<span style="color:#ff6b6b">❌ 系統偵測到異常：<br>${err.message}</span>`;
             resBox.style.display = 'block';
         } finally {
             loader.style.display = 'none';
