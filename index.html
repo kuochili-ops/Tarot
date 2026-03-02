@@ -53,10 +53,9 @@
 
 <script>
     const API_KEY = "AIzaSyCuzCXkCgNznA_BGVVo8TIaD7HnS1tkcMI";
-    // 修正路徑：使用 v1beta 搭配 flash-latest
-    const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`;
+    // 強制修正：改用 v1 路徑與標準模型名稱
+    const ENDPOINT = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
-    // Wiki 圖片映射邏輯
     function getWikiImg(name_short) {
         const mapping = {
             "ar00":"00_Fool","ar01":"01_Magician","ar02":"02_High_Priestess","ar03":"03_Empress","ar04":"04_Emperor",
@@ -65,7 +64,7 @@
             "ar15":"15_Devil","ar16":"16_Tower","ar17":"17_Star","ar18":"18_Moon","ar19":"19_Sun","ar20":"20_Judgement","ar21":"21_World"
         };
         const fileName = mapping[name_short] || "00_Fool";
-        // 使用 Wikimedia 的縮圖路徑，這通常比原始 Sacred Texts 連結更穩定
+        // 改用 Wikimedia Commons 穩定的 thumb 路徑
         return `https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/RWS_Tarot_06_Lovers.jpg/250px-RWS_Tarot_06_Lovers.jpg`.replace("06_Lovers", fileName);
     }
 
@@ -80,7 +79,6 @@
         resBox.style.display = 'none';
 
         try {
-            // 1. 抽牌
             const tarotRes = await fetch("https://tarotapi.dev/api/v1/cards/random?n=3");
             const tarotData = await tarotRes.json();
             const cards = tarotData.cards;
@@ -102,12 +100,13 @@
                 spreadInfo.push(`${['過去','現在','未來'][i]}:${cards[i].name}(${isRev?'逆位':'正位'})`);
             }
 
-            // 2. AI 解說
             loader.style.display = 'block';
             const aiRes = await fetch(ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: `你是一位塔羅大師。問題：${question}。牌陣：${spreadInfo.join(',')}。請給予一段 200 字以內的解讀。` }] }] })
+                body: JSON.stringify({ 
+                    contents: [{ parts: [{ text: `你是一位塔羅大師。問題：${question}。牌陣：${spreadInfo.join(',')}。請給予一段 200 字以內的解讀。` }] }] 
+                })
             });
 
             const aiData = await aiRes.json();
@@ -117,7 +116,7 @@
             resBox.style.display = 'block';
 
         } catch (err) {
-            resBox.innerHTML = `<span style="color:#ff6b6b">連線異常：${err.message}</span><br><small>建議檢查 API Key 是否已啟用服務。</small>`;
+            resBox.innerHTML = `<span style="color:#ff6b6b">連線異常：${err.message}</span><br><small>建議至 Google AI Studio 確認模型權限。</small>`;
             resBox.style.display = 'block';
         } finally {
             loader.style.display = 'none';
