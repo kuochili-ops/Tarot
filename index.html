@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tarot Insight v8.0</title>
+    <title>Tarot Insight v10.0</title>
     <style>
         :root { --gold: #f1c40f; --night: #0a0a12; }
         body { background: var(--night); color: #eee; font-family: sans-serif; text-align: center; padding: 20px; margin: 0; }
@@ -30,10 +30,10 @@
 </head>
 <body>
 
-    <h2 style="color:var(--gold)">聖三角塔羅 (連線強化)</h2>
+    <h2 style="color:var(--gold)">聖三角塔羅 (正式運行版)</h2>
     
     <div class="panel">
-        <input type="text" id="q" placeholder="你想問什麼？" value="我今日的綜合運勢？">
+        <input type="text" id="q" placeholder="請輸入您的問題..." value="我今日的綜合運勢？">
         <br>
         <button id="btn" onclick="app.run()">開始占卜</button>
     </div>
@@ -48,10 +48,23 @@
     <div id="result"></div>
 
 <script>
+/**
+ * 牌面名稱註解與對照表
+ */
+const TAROT_MAP = {
+    "ar00": "愚者 (The Fool)", "ar01": "魔術師 (The Magician)", "ar02": "女祭司 (The High Priestess)",
+    "ar03": "皇后 (The Empress)", "ar04": "皇帝 (The Emperor)", "ar05": "教皇 (The Hierophant)",
+    "ar06": "戀人 (The Lovers)", "ar07": "戰車 (The Chariot)", "ar08": "力量 (Strength)",
+    "ar09": "隱士 (The Hermit)", "ar10": "命運之輪 (Wheel of Fortune)", "ar11": "正義 (Justice)",
+    "ar12": "吊人 (The Hanged Man)", "ar13": "死神 (Death)", "ar14": "節制 (Temperance)",
+    "ar15": "惡魔 (The Devil)", "ar16": "高塔 (The Tower)", "ar17": "星星 (The Star)",
+    "ar18": "月亮 (The Moon)", "ar19": "太陽 (The Sun)", "ar20": "審判 (Judgement)",
+    "ar21": "世界 (The World)"
+};
+
 const app = {
-    // ⚠ 填入你的 Token
-    TOKEN: "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",
-    // 更換更穩定的推論模型路徑
+    // 已更換為你提供的最新 Token
+    TOKEN: "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",
     API_URL: "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta",
 
     UI: {
@@ -70,57 +83,54 @@ const app = {
         const btn = document.getElementById('btn');
         const resBox = document.getElementById('result');
         const loader = document.getElementById('loader');
-        const qText = document.getElementById('q').value;
         
         btn.disabled = true;
         resBox.style.display = 'none';
         this.UI.reset();
 
         try {
-            // 1. 抽牌邏輯
+            // 1. 抽牌
             const tarotRes = await fetch("https://tarotapi.dev/api/v1/cards/random?n=3");
             const data = await tarotRes.json();
-            let cardInfo = [];
+            let cardNames = [];
 
             for(let i=0; i<3; i++) {
                 const card = data.cards[i];
                 const isRev = Math.random() > 0.5;
+                const cardDisplayName = TAROT_MAP[card.name_short] || card.name;
+                
+                // 圖片來源更新
                 document.getElementById(`img${i}`).src = `https://www.sacred-texts.com/tarot/pkt/img/${card.name_short.toLowerCase()}.jpg`;
+                
                 this.UI.flip(i, isRev);
-                cardInfo.push(`${['過去','現在','未來'][i]}：${card.name}(${isRev?'逆位':'正位'})`);
+                cardNames.push(`${cardDisplayName}(${isRev?'逆位':'正位'})`);
             }
 
-            // 2. API 解析 (強化版請求)
+            // 2. AI 解析 (使用 Zephyr 模型確保穩定性)
             loader.style.display = 'block';
-            
             const response = await fetch(this.API_URL, {
                 headers: { 
-                    "Authorization": `Bearer ${this.TOKEN.trim()}`,
+                    "Authorization": `Bearer ${this.TOKEN}`,
                     "Content-Type": "application/json"
                 },
                 method: "POST",
                 body: JSON.stringify({
-                    inputs: `<|system|>\n你是一位繁體中文塔羅大師。</s>\n<|user|>\n問題：${qText}。牌陣：${cardInfo.join('，')}。請給予 100 字解讀。</s>\n<|assistant|>\n`,
-                    parameters: { max_new_tokens: 250, temperature: 0.7 }
+                    inputs: `<|system|>\n你是一位精通偉特牌的繁體中文塔羅師。</s>\n<|user|>\n問題：${document.getElementById('q').value}。牌陣：過去是${cardNames[0]}、現在是${cardNames[1]}、未來是${cardNames[2]}。請給予一段約 150 字的溫暖解讀。</s>\n<|assistant|>\n`,
+                    options: { wait_for_model: true }
                 }),
             });
 
-            if (!response.ok) {
-                const errJson = await response.json();
-                throw new Error(errJson.error || `Error ${response.status}`);
-            }
+            if (!response.ok) throw new Error("API 目前繁忙或 Token 權限受限，請稍後再試。");
 
             const result = await response.json();
-            let output = Array.isArray(result) ? result[0].generated_text : result.generated_text;
-            
-            // 擷取大師回話的部分
+            const output = Array.isArray(result) ? result[0].generated_text : result.generated_text;
             const finalSpeech = output.split('<|assistant|>').pop().trim();
 
-            resBox.innerHTML = `<b style="color:var(--gold)">🔮 大師解析：</b><br>${finalSpeech}`;
+            resBox.innerHTML = `<b style="color:var(--gold)">🔮 大師啟示：</b><br>${finalSpeech}`;
             resBox.style.display = 'block';
 
         } catch (err) {
-            resBox.innerHTML = `<span style="color:#ff6b6b">❌ 連線狀態：${err.message}</span><br><small>💡 如果還是失敗，請確認 Token 是否正確複製（hf_...）</small>`;
+            resBox.innerHTML = `<span style="color:#ff6b6b">❌ 系統提示：${err.message}</span>`;
             resBox.style.display = 'block';
         } finally {
             loader.style.display = 'none';
