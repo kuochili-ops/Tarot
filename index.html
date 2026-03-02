@@ -3,77 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tarot Insight - Llama Edition</title>
+    <title>Tarot Insight v4.0</title>
     <style>
-        :root { --gold: #f1c40f; --night: #0a0a12; }
-        body { background: var(--night); color: #eee; font-family: sans-serif; text-align: center; padding: 20px; margin: 0; }
+        :root { --gold: #f1c40f; --night: #0a0a12; --card-w: 105px; --card-h: 175px; }
+        body { background: var(--night); color: #eee; font-family: -apple-system, sans-serif; text-align: center; padding: 20px; margin: 0; }
+        
+        /* UI 介面 */
         .panel { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid var(--gold); max-width: 420px; margin: 0 auto 20px; }
         input { width: 85%; background: transparent; border: none; border-bottom: 2px solid var(--gold); color: white; padding: 10px; text-align: center; outline: none; margin-bottom: 15px; font-size: 1.1rem; }
         button { background: var(--gold); color: black; border: none; padding: 12px 35px; border-radius: 25px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #d4ac0d; transform: scale(1.05); }
-        button:disabled { background: #444; color: #888; transform: none; }
+        button:disabled { background: #444; color: #888; cursor: not-allowed; }
 
         .spread { display: flex; justify-content: center; gap: 8px; margin: 25px 0; }
-        .card-box { width: 105px; text-align: center; }
+        .card-box { width: var(--card-w); text-align: center; }
         .label { font-size: 0.8rem; color: var(--gold); margin-bottom: 8px; font-weight: bold; }
 
         /* --- 翻牌模組 (Flip-board Module) --- */
-        .tarot-card { width: 105px; height: 175px; perspective: 1000px; }
+        .tarot-module { width: var(--card-w); height: var(--card-h); perspective: 1000px; }
         .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
         .card-inner.flipped { transform: rotateY(180deg); }
         .card-inner.reversed { transform: rotateY(180deg) rotateZ(180deg); }
         .face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 10px; border: 1.5px solid var(--gold); overflow: hidden; background: #1a1a2e; }
-        .back { display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: var(--gold); }
-        .front { transform: rotateY(180deg); background: #fff; }
-        .front img { width: 100%; height: 100%; object-fit: cover; }
+        .back { display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: var(--gold); z-index: 2; }
+        .front { transform: rotateY(180deg); background: #fff; z-index: 1; }
+        .front img { width: 100%; height: 100%; object-fit: cover; display: block; }
         /* ------------------------------------ */
 
         #result { background: rgba(255,255,255,0.08); padding: 25px; border-radius: 15px; text-align: left; display: none; line-height: 1.8; border-left: 5px solid var(--gold); max-width: 420px; margin: 20px auto; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .loading { display: none; color: var(--gold); margin: 20px; font-style: italic; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <h2 style="color:var(--gold); letter-spacing: 2px;">TAROT INSIGHT (Llama)</h2>
+    <h2 style="color:var(--gold); letter-spacing: 2px;">TAROT INSIGHT (HF)</h2>
     
     <div class="panel">
-        <input type="text" id="q" placeholder="請默想你的問題..." value="我今日的綜合運勢？">
+        <input type="text" id="q" placeholder="你想問什麼？" value="我今日的綜合運勢？">
         <br>
-        <button id="btn" onclick="app.run()">開啟命運之門</button>
+        <button id="btn" onclick="MainApp.run()">開啟命運之門</button>
     </div>
 
     <div class="spread">
-        <div class="card-box"><div class="label">過去</div><div class="tarot-card"><div class="card-inner" id="c0"><div class="face back">✦</div><div class="face front"><img id="img0"></div></div></div></div>
-        <div class="card-box"><div class="label">現在</div><div class="tarot-card"><div class="card-inner" id="c1"><div class="face back">✦</div><div class="face front"><img id="img1"></div></div></div></div>
-        <div class="card-box"><div class="label">未來</div><div class="tarot-card"><div class="card-inner" id="c2"><div class="face back">✦</div><div class="face front"><img id="img2"></div></div></div></div>
+        <div class="card-box"><div class="label">過去</div><div class="tarot-module"><div class="card-inner" id="c0"><div class="face back">✦</div><div class="face front"><img id="img0"></div></div></div></div>
+        <div class="card-box"><div class="label">現在</div><div class="tarot-module"><div class="card-inner" id="c1"><div class="face back">✦</div><div class="face front"><img id="img1"></div></div></div></div>
+        <div class="card-box"><div class="label">未來</div><div class="tarot-module"><div class="card-inner" id="c2"><div class="face back">✦</div><div class="face front"><img id="img2"></div></div></div></div>
     </div>
 
-    <div class="loading" id="loader">✨ 正在與 Hugging Face 建立意識連結...</div>
+    <div class="loading" id="loader">✨ 正在讀取星象訊號...</div>
     <div id="result"></div>
 
 <script>
 /**
- * 核心應用模組
+ * 翻牌模組 (Flip-board Module)
  */
-const app = {
-    // ⚠ 請在此填入你的 Hugging Face Token
-    TOKEN: "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", 
-    // 使用 Meta 的 Llama 3.2 高效率模型
-    MODEL: "meta-llama/Llama-3.2-1B-Instruct",
-
-    // 翻牌邏輯控制
-    flipModule: {
-        execute: (idx, isRev) => {
-            const el = document.getElementById(`c${idx}`);
-            el.className = 'card-inner';
-            void el.offsetWidth; 
-            el.classList.add(isRev ? 'reversed' : 'flipped');
-        },
-        reset: () => {
-            for(let i=0; i<3; i++) document.getElementById(`c${i}`).className = 'card-inner';
-        }
+const TarotUI = {
+    flip: (idx, isRev) => {
+        const el = document.getElementById(`c${idx}`);
+        el.className = 'card-inner'; // Reset
+        void el.offsetWidth; // Force Reflow
+        el.classList.add(isRev ? 'reversed' : 'flipped');
     },
+    reset: () => {
+        for(let i=0; i<3; i++) document.getElementById(`c${i}`).className = 'card-inner';
+    }
+};
+
+/**
+ * 主程式邏輯
+ */
+const MainApp = {
+    // ⚠ 請在此貼入 Hugging Face Token (以 hf_ 開頭)
+    HF_TOKEN: "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",
+    MODEL: "meta-llama/Llama-3.2-1B-Instruct",
 
     run: async function() {
         const btn = document.getElementById('btn');
@@ -83,57 +85,61 @@ const app = {
 
         btn.disabled = true;
         resBox.style.display = 'none';
-        this.flipModule.reset();
+        TarotUI.reset();
 
         try {
-            // 1. 抽取牌卡
+            // 1. 抽取牌組
             const tarotRes = await fetch("https://tarotapi.dev/api/v1/cards/random?n=3");
-            const tarotData = await tarotRes.json();
-            const cards = tarotData.cards;
-            let info = [];
+            const data = await tarotRes.json();
+            const cards = data.cards;
+            let log = [];
 
             for(let i=0; i<3; i++) {
                 const isRev = Math.random() > 0.5;
                 const card = cards[i];
+                const cardID = card.name_short.toLowerCase();
                 
-                // 圖片路徑：對齊 tarotqa.com
-                document.getElementById(`img${i}`).src = `https://tarotqa.com/img/tarot/${card.name_short.toLowerCase()}.jpg`;
+                // 更換為穩定的 GitHub 圖片來源
+                const imgNode = document.getElementById(`img${i}`);
+                imgNode.src = `https://raw.githubusercontent.com/ekelen/tarot/master/images/cards/${cardID}.jpg`;
                 
-                // 執行翻牌
-                setTimeout(() => this.flipModule.execute(i, isRev), i * 350);
-                info.push(`${['過去','現在','未來'][i]}位是${card.name}${isRev?'逆位':'正位'}`);
+                // 執行翻牌模組
+                setTimeout(() => TarotUI.flip(i, isRev), i * 350);
+                log.push(`${['過去','現在','未來'][i]}位：${card.name}(${isRev?'逆位':'正位'})`);
             }
 
-            // 2. 調用 Hugging Face API
+            // 2. AI 解析 (Hugging Face API)
             loader.style.display = 'block';
-            const prompt = `<|begin_of_text|><|start_header_id|>system<|end_header_id|>你是一位資深塔羅占卜師，請用繁體中文回答。<|eot_id|><|start_header_id|>user<|end_header_id|>問題：${question}。牌陣：${info.join('，')}。請給予一段約 150 字的解讀。<|eot_id|><|start_header_id|>assistant<|end_header_id|>`;
+            const prompt = `你是一位專業塔羅占卜師。問題：${question}。牌陣：${log.join('，')}。請給予一段 150 字的繁體中文溫暖解讀。`;
 
             const aiRes = await fetch(`https://api-inference.huggingface.co/models/${this.MODEL}`, {
                 method: "POST",
                 headers: {
-                    "Authorization": `Bearer ${this.TOKEN}`,
+                    "Authorization": `Bearer ${this.HF_TOKEN}`,
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({
+                body: JSON.stringify({ 
                     inputs: prompt,
-                    parameters: { max_new_tokens: 500, temperature: 0.7 }
+                    options: { wait_for_model: true } // 重要：若模型休眠，強制等待熱機
                 })
             });
 
-            const data = await aiRes.json();
-            
-            // Hugging Face 回傳格式通常是陣列或包含 generated_text
-            let resultText = data[0]?.generated_text || data.generated_text || "無法取得解讀";
-            // 移除 Prompt 部分，只留下 AI 回答
-            if (resultText.includes("assistant")) {
-                resultText = resultText.split("assistant").pop().replace(/<\|eot_id\|>/g, "").trim();
+            if (!aiRes.ok) {
+                const errDetail = await aiRes.json();
+                throw new Error(errDetail.error || "連線超時");
             }
 
-            resBox.innerHTML = `<b style="color:var(--gold)">🔮 大師解析：</b><br>${resultText}`;
+            const aiData = await aiRes.json();
+            const rawText = aiData[0]?.generated_text || aiData.generated_text || "解讀暫時無法產生";
+            
+            // 移除 Prompt 部分，只顯示結果
+            const finalResult = rawText.includes(prompt) ? rawText.replace(prompt, "").trim() : rawText;
+
+            resBox.innerHTML = `<b style="color:var(--gold)">🔮 大師啟示：</b><br>${finalResult}`;
             resBox.style.display = 'block';
 
         } catch (err) {
-            resBox.innerHTML = `<span style="color:#ff6b6b">連線失敗：${err.message}</span>`;
+            resBox.innerHTML = `<span style="color:#ff6b6b">❌ 系統提示：${err.message}</span><br><small>💡 若顯示 "Unauthorized"，請確認 Token 是否填寫正確。</small>`;
             resBox.style.display = 'block';
         } finally {
             loader.style.display = 'none';
