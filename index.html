@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Tarot Ultra</title>
+    <title>Gemini Tarot - Official Fix</title>
     <style>
         :root { --gold: #f1c40f; --night: #0a0a12; }
-        body { background: #0a0a12; color: #eee; font-family: sans-serif; text-align: center; padding: 20px; margin: 0; }
-        .panel { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid var(--gold); max-width: 400px; margin: 0 auto 20px; }
+        body { background: #0a0a12; color: #eee; font-family: -apple-system, sans-serif; text-align: center; padding: 20px; margin: 0; }
+        .panel { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid var(--gold); max-width: 400px; margin: 0 auto 25px; }
         input { width: 85%; background: transparent; border: none; border-bottom: 2px solid var(--gold); color: white; padding: 10px; text-align: center; outline: none; margin-bottom: 15px; font-size: 1.1rem; }
-        button { background: var(--gold); color: black; border: none; padding: 12px 35px; border-radius: 25px; font-weight: bold; cursor: pointer; }
+        button { background: var(--gold); color: black; border: none; padding: 12px 35px; border-radius: 25px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:disabled { background: #555; }
 
         .spread { display: flex; justify-content: center; gap: 8px; margin: 25px 0; }
-        .card-box { width: 105px; text-align: center; }
+        .card-box { width: 105px; }
         .label { font-size: 0.8rem; color: var(--gold); margin-bottom: 8px; font-weight: bold; }
         
         /* Flip-board Module */
@@ -23,20 +24,21 @@
         .face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 10px; border: 1.5px solid var(--gold); overflow: hidden; background: #1a1a2e; }
         .back { display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: var(--gold); }
         .front { transform: rotateY(180deg); background: #fff; }
-        .front img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .front img { width: 100%; height: 100%; object-fit: cover; }
         
-        #result { background: rgba(255,255,255,0.08); padding: 20px; border-radius: 15px; text-align: left; display: none; line-height: 1.8; border-left: 5px solid var(--gold); max-width: 400px; margin: 20px auto; }
+        #result { background: rgba(255,255,255,0.08); padding: 20px; border-radius: 15px; text-align: left; display: none; line-height: 1.8; border-left: 5px solid var(--gold); max-width: 400px; margin: 20px auto; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .loading { display: none; color: var(--gold); margin: 20px; font-style: italic; }
     </style>
 </head>
 <body>
 
-    <h2 style="color:var(--gold); letter-spacing: 2px;">TAROT AI 聖三角</h2>
+    <h2 style="color:var(--gold); letter-spacing: 2px;">TAROT INSIGHT</h2>
     
     <div class="panel">
         <input type="text" id="q" placeholder="你想問什麼？" value="我今日的綜合運勢？">
         <br>
-        <button id="btn" onclick="run()">抽取啟示</button>
+        <button id="btn" onclick="run()">抽牌占卜</button>
     </div>
 
     <div class="spread">
@@ -45,12 +47,13 @@
         <div class="card-box"><div class="label">未來</div><div class="card-inner" id="c2"><div class="face back">✦</div><div class="face front"><img id="img2"></div></div></div>
     </div>
 
-    <div class="loading" id="loader">✨ 正在連結宇宙訊號...</div>
+    <div class="loading" id="loader">✨ 正在連結 Gemini 智慧核心...</div>
     <div id="result"></div>
 
 <script>
+    // 請確保您的 API Key 已啟用 Gemini API 權限
     const API_KEY = "AIzaSyCuzCXkCgNznA_BGVVo8TIaD7HnS1tkcMI";
-    // 切換更穩定的 API 版本與模型組合
+    // 修正：根據官方建議使用 v1 版本端點
     const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
     async function run() {
@@ -64,7 +67,7 @@
         resBox.style.display = 'none';
 
         try {
-            // 1. 抽牌
+            // 1. 抽取 3 張隨機牌
             const tarotRes = await fetch("https://tarotapi.dev/api/v1/cards/random?n=3");
             const tarotData = await tarotRes.json();
             const cards = tarotData.cards;
@@ -76,15 +79,17 @@
                 const node = document.getElementById(`c${i}`);
                 const img = document.getElementById(`img${i}`);
                 
-                // 強效圖片路徑：使用 tarotqa.com 格式
-                const cardID = cards[i].name_short.toLowerCase();
-                img.src = `https://tarotqa.com/img/tarot/${cardID}.jpg`;
+                // 圖片路徑：根據 tarotqa.com/gallery 的結構映射
+                // 格式：https://tarotqa.com/img/tarot/ar06.jpg (ar06 為 The Lovers)
+                const cardCode = cards[i].name_short.toLowerCase();
+                img.src = `https://tarotqa.com/img/tarot/${cardCode}.jpg`;
                 
-                // 圖片錯誤處理
+                // 備援機制
                 img.onerror = function() {
-                    this.src = `https://placehold.co/100x170/1a1a2e/gold?text=${cards[i].name.replace(/ /g,'+')}`;
+                    this.src = `https://placehold.co/100x170/1a1a2e/f1c40f?text=${cards[i].name}`;
                 };
 
+                // 翻牌動畫
                 node.classList.remove('flipped', 'reversed');
                 setTimeout(() => {
                     node.classList.add(isRev ? 'reversed' : 'flipped');
@@ -93,28 +98,31 @@
                 spreadInfo.push(`${['過去','現在','未來'][i]}位：${cards[i].name}(${isRev?'逆位':'正位'})`);
             }
 
-            // 2. AI 請求
+            // 2. 呼叫 Gemini API
             loader.style.display = 'block';
-            const aiRes = await fetch(API_URL, {
+            const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: `你是一位大師。問題：${question}。牌陣：${spreadInfo.join('，')}。請給予一段約 150 字解讀。` }] }] })
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: `你是一位專業塔羅占卜師。問題：${question}。牌陣：${spreadInfo.join('，')}。請給予一段約 150 字、語氣溫暖且充滿指引的解讀。` }] }]
+                })
             });
 
-            const aiData = await aiRes.json();
+            const aiData = await response.json();
             
-            // 容錯檢查
+            // 檢查 AI 回傳結果
             if (aiData.candidates && aiData.candidates[0]) {
                 const text = aiData.candidates[0].content.parts[0].text;
                 resBox.innerHTML = `<b style="color:var(--gold)">🔮 大師解析：</b><br>${text}`;
+                resBox.style.display = 'block';
             } else {
-                throw new Error(aiData.error ? aiData.error.message : "API 權限同步中，請稍後再試。");
+                // 若報錯，顯示官方說明建議的排錯訊息
+                const msg = aiData.error ? aiData.error.message : "API 暫未回傳內容，請檢查密鑰權限。";
+                throw new Error(msg);
             }
-            
-            resBox.style.display = 'block';
 
         } catch (err) {
-            resBox.innerHTML = `<span style="color:#ff6b6b">系統提示：${err.message}</span>`;
+            resBox.innerHTML = `<span style="color:#ff6b6b">系統異常：${err.message}</span><br><small>建議確認 API Key 於 Google AI Studio 是否運作正常。</small>`;
             resBox.style.display = 'block';
         } finally {
             loader.style.display = 'none';
