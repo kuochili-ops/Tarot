@@ -3,45 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Tarot - High Res Edition</title>
+    <title>Gemini Tarot - Final Strike</title>
     <style>
-        :root { --gold: #f1c40f; --night: #0a0a12; --card-w: 110px; --card-h: 185px; }
-        body { background: var(--night); color: #eee; font-family: -apple-system, "Microsoft JhengHei", sans-serif; text-align: center; padding: 20px; margin: 0; }
+        :root { --gold: #f1c40f; --night: #0a0a12; }
+        body { background: var(--night); color: #eee; font-family: sans-serif; text-align: center; padding: 20px; margin: 0; }
+        .panel { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid var(--gold); max-width: 420px; margin: 0 auto 20px; }
+        input { width: 85%; background: transparent; border: none; border-bottom: 2px solid var(--gold); color: white; padding: 10px; text-align: center; outline: none; margin-bottom: 15px; font-size: 1.1rem; }
+        button { background: var(--gold); color: black; border: none; padding: 12px 35px; border-radius: 25px; font-weight: bold; cursor: pointer; }
+        button:disabled { background: #444; color: #888; }
+
+        .spread { display: flex; justify-content: center; gap: 8px; margin: 25px 0; }
+        .card-box { width: 105px; text-align: center; }
+        .label { font-size: 0.8rem; color: var(--gold); margin-bottom: 8px; font-weight: bold; }
         
-        /* UI Layout */
-        .panel { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px; border: 1px solid var(--gold); max-width: 420px; margin: 0 auto 30px; backdrop-filter: blur(5px); }
-        input { width: 80%; background: transparent; border: none; border-bottom: 2px solid var(--gold); color: white; padding: 12px; text-align: center; outline: none; margin-bottom: 20px; font-size: 1.1rem; }
-        button { background: var(--gold); color: black; border: none; padding: 12px 40px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(241,196,15,0.3); }
-        button:disabled { background: #555; cursor: not-allowed; }
-
-        .spread { display: flex; justify-content: center; gap: 10px; margin: 30px 0; }
-        .card-box { width: var(--card-w); text-align: center; }
-        .label { font-size: 0.85rem; color: var(--gold); margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; }
-
         /* --- Flip-board Module --- */
-        .card-inner { width: var(--card-w); height: var(--card-h); position: relative; transform-style: preserve-3d; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-inner { width: 105px; height: 175px; position: relative; transform-style: preserve-3d; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
         .card-inner.flipped { transform: rotateY(180deg); }
         .card-inner.reversed { transform: rotateY(180deg) rotateZ(180deg); }
-        
-        .face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px; border: 1.5px solid var(--gold); overflow: hidden; background: #1a1a2e; box-sizing: border-box; }
-        .back { display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: var(--gold); background: linear-gradient(45deg, #1a1a2e, #0a0a12); }
+        .face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 10px; border: 1.5px solid var(--gold); overflow: hidden; background: #1a1a2e; }
+        .back { display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: var(--gold); }
         .front { transform: rotateY(180deg); background: #fff; }
-        .front img { width: 100%; height: 100%; object-fit: cover; }
+        .front img { width: 100%; height: 100%; object-fit: cover; display: block; }
         /* ------------------------- */
 
-        #result { background: rgba(255,255,255,0.08); padding: 25px; border-radius: 15px; text-align: left; display: none; line-height: 1.8; border-left: 5px solid var(--gold); max-width: 420px; margin: 20px auto; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        #result { background: rgba(255,255,255,0.08); padding: 20px; border-radius: 15px; text-align: left; display: none; line-height: 1.8; border-left: 5px solid var(--gold); max-width: 420px; margin: 20px auto; border-top: 1px solid rgba(241,196,15,0.2); }
         .loading { display: none; color: var(--gold); margin: 20px; font-style: italic; }
     </style>
 </head>
 <body>
 
-    <h2 style="color:var(--gold); letter-spacing: 3px;">TAROT INSIGHT</h2>
+    <h2 style="color:var(--gold); letter-spacing: 2px;">TAROT AI 聖三角</h2>
     
     <div class="panel">
-        <input type="text" id="q" placeholder="你想問什麼？" value="我今日的綜合運勢？">
+        <input type="text" id="q" placeholder="請輸入您的問題..." value="我今日的綜合運勢？">
         <br>
-        <button id="btn" onclick="revealDestiny()">抽取啟示</button>
+        <button id="btn" onclick="runApp()">讀取天命</button>
     </div>
 
     <div class="spread">
@@ -50,100 +46,84 @@
         <div class="card-box"><div class="label">未來</div><div class="card-inner" id="c2"><div class="face back">✦</div><div class="face front"><img id="img2"></div></div></div>
     </div>
 
-    <div class="loading" id="loader">✨ 正在連結 Gemini 智慧核心...</div>
+    <div class="loading" id="loader">✨ 正在與 Gemini 建立通靈連結...</div>
     <div id="result"></div>
 
 <script>
-    /**
-     * ⚠️ 注意：請務必更換為「新建立」的 API Key
-     * 您原本的 Key 已被系統偵測到洩漏，導致 gemini-1.5-flash 無法使用
-     */
-    const API_KEY = "AIzaSyAvs2TIlPGIyn0SbLOv55eOJNhqeI1mhcY"; 
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    // ⚠ 請在此填入你新申請的 Key
+    const API_KEY = "在此輸入新的_API_KEY"; 
+    
+    // 修正：使用 v1beta 搭配 gemini-1.5-flash，這是 Free Tier 最穩定的組合
+    const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
+    const MODEL_NAME = "gemini-1.5-flash"; 
 
-    // 映射 GitHub 圖庫 (Rider-Waite 高清版)
-    // 該來源命名規則：ar01.jpg, cu05.jpg... 完美契合 tarotapi.dev 的 name_short
-    function getStableImgUrl(shortName) {
-        // 使用 GitHub 上的穩定鏡像
-        return `https://raw.githubusercontent.com/ekelen/tarot/master/images/cards/${shortName.toLowerCase()}.jpg`;
-    }
+    const UI = {
+        btn: document.getElementById('btn'),
+        res: document.getElementById('result'),
+        loader: document.getElementById('loader'),
+        q: document.getElementById('q')
+    };
 
-    async function revealDestiny() {
-        const question = document.getElementById('q').value;
-        const btn = document.getElementById('btn');
-        const resBox = document.getElementById('result');
-        const loader = document.getElementById('loader');
-
-        if(!question) return alert("請輸入問題");
-        btn.disabled = true;
-        resBox.style.display = 'none';
-
+    async function runApp() {
+        UI.btn.disabled = true;
+        UI.res.style.display = 'none';
+        
         try {
             // 1. 抽牌
-            const tarotRes = await fetch("https://tarotapi.dev/api/v1/cards/random?n=3");
-            const tarotData = await tarotRes.json();
+            const tarotData = await fetch("https://tarotapi.dev/api/v1/cards/random?n=3").then(r => r.json());
             const cards = tarotData.cards;
-
-            let spreadInfo = [];
+            let log = [];
 
             for(let i=0; i<3; i++) {
                 const isRev = Math.random() > 0.5;
-                const node = document.getElementById(`c${i}`);
-                const img = document.getElementById(`img${i}`);
+                const card = cards[i];
+                const cardID = card.name_short.toLowerCase();
                 
-                // 修正：修正 name_short 轉換邏輯
-                // tarotapi 的 name_short 有時是大阿爾卡那 ar01，小阿爾卡那則是 w01, c01, s01, p01
-                let cardCode = cards[i].name_short.toLowerCase();
-                // 修正金幣牌映射 (pe -> p)
-                if(cardCode.startsWith('pe')) cardCode = 'p' + cardCode.substring(2);
-                // 修正權杖牌映射 (wa -> w)
-                if(cardCode.startsWith('wa')) cardCode = 'w' + cardCode.substring(2);
-                // 修正寶劍牌映射 (sw -> s)
-                if(cardCode.startsWith('sw')) cardCode = 's' + cardCode.substring(2);
-                // 修正聖杯牌映射 (cu -> c)
-                if(cardCode.startsWith('cu')) cardCode = 'c' + cardCode.substring(2);
-
-                img.src = getStableImgUrl(cardCode);
+                // 圖片映射：確保對接 tarotqa.com
+                const imgNode = document.getElementById(`img${i}`);
+                imgNode.src = `https://tarotqa.com/img/tarot/${cardID}.jpg`;
                 
-                // 圖片容錯
-                img.onerror = function() {
-                    this.src = `https://placehold.co/110x185/1a1a2e/gold?text=${cards[i].name.replace(/ /g,'+')}`;
-                };
-
-                // 重置翻牌動畫
-                node.classList.remove('flipped', 'reversed');
+                // 翻牌動畫 (Flip-board Module 呼叫)
+                const inner = document.getElementById(`c${i}`);
+                inner.classList.remove('flipped', 'reversed');
                 setTimeout(() => {
-                    node.classList.add(isRev ? 'reversed' : 'flipped');
-                }, i * 350);
+                    inner.classList.add(isRev ? 'reversed' : 'flipped');
+                }, i * 300);
 
-                spreadInfo.push(`${['過去','現在','未來'][i]}：${cards[i].name}(${isRev?'逆位':'正位'})`);
+                log.push(`${['過去','現在','未來'][i]}位：${card.name}(${isRev?'逆位':'正位'})`);
             }
 
-            // 2. AI 解析
-            loader.style.display = 'block';
-            const aiRes = await fetch(API_URL, {
+            // 2. AI 解析 (加上強大的 Error Handling)
+            UI.loader.style.display = 'block';
+            
+            const response = await fetch(`${API_BASE}${MODEL_NAME}:generateContent?key=${API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: `你是一位專業塔羅導師。問題：${question}。牌陣：${spreadInfo.join('，')}。請給予一段約 150 字、充滿洞察力且溫暖的解讀。` }] }] })
+                body: JSON.stringify({ contents: [{ parts: [{ text: `你是一位大師。問題：${UI.q.value}。牌陣：${log.join('，')}。請給予一段 150 字溫暖解讀。` }] }] })
             });
 
-            const aiData = await aiRes.json();
-            
+            const aiData = await response.json();
+
+            if (aiData.error) {
+                // 如果 1.5-flash 報錯，這會告訴我們具體原因
+                throw new Error(`Google API 報錯: ${aiData.error.message}`);
+            }
+
             if (aiData.candidates && aiData.candidates[0]) {
                 const text = aiData.candidates[0].content.parts[0].text;
-                resBox.innerHTML = `<b style="color:var(--gold); font-size:1.1rem;">🔮 大師解惑：</b><br>${text}`;
+                UI.res.innerHTML = `<b style="color:var(--gold)">🔮 大師解析：</b><br>${text}`;
             } else {
-                throw new Error(aiData.error ? aiData.error.message : "API Key 狀態異常（可能是因為洩漏被封鎖），請更換新 Key。");
+                throw new Error("API 未能產生內容，請確認您的 Key 是否具備 Gemini 存取權限。");
             }
-            
-            resBox.style.display = 'block';
+
+            UI.res.style.display = 'block';
 
         } catch (err) {
-            resBox.innerHTML = `<span style="color:#ff6b6b">系統提示：${err.message}</span><br><br><small>💡 如果看到 "models/gemini-1.5-flash is not found"，請至 AI Studio 建立一個新的 API Key 並確保不要公開在 GitHub 上。</small>`;
-            resBox.style.display = 'block';
+            UI.res.innerHTML = `<span style="color:#ff6b6b">❌ 執行失敗：</span><br><small>${err.message}</small><br><br><b>建議檢查：</b><br>1. 您的 IP 是否在 Google AI 支援的區域？<br>2. 是否已在 Google Cloud 中啟用 "Generative Language API"？`;
+            UI.res.style.display = 'block';
         } finally {
-            loader.style.display = 'none';
-            btn.disabled = false;
+            UI.loader.style.display = 'none';
+            UI.btn.disabled = false;
         }
     }
 </script>
