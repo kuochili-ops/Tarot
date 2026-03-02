@@ -3,27 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tarot Insight - 互動占卜</title>
+    <title>聖三角塔羅 - 深度對話版</title>
     <style>
-        :root { --gold: #f1c40f; --night: #0a0a12; --card-w: 95px; --card-h: 155px; }
+        :root { --gold: #f1c40f; --night: #0a0a12; --card-w: 90px; --card-h: 150px; }
         body { background: var(--night); color: #eee; font-family: 'PingFang TC', sans-serif; text-align: center; padding: 20px; margin: 0; }
         
+        /* 面板與輸入 */
         .panel { background: rgba(255,255,255,0.05); padding: 25px; border-radius: 20px; border: 1px solid var(--gold); max-width: 420px; margin: 0 auto 30px; }
-        input { width: 85%; background: transparent; border: none; border-bottom: 2px solid var(--gold); color: white; padding: 12px; text-align: center; outline: none; margin-bottom: 20px; font-size: 1.1rem; }
+        input[type="text"] { width: 85%; background: transparent; border: none; border-bottom: 2px solid var(--gold); color: white; padding: 10px; text-align: center; outline: none; font-size: 1.1rem; }
         
-        button { background: linear-gradient(135deg, var(--gold), #d4af37); color: black; border: none; padding: 12px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: 0.3s; margin: 5px; }
-        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(241,196,15,0.3); }
-        button:disabled { background: #444; color: #888; transform: none; }
-        .btn-outline { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
+        button { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 25px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { transform: scale(1.05); }
+        button:disabled { background: #444; color: #888; }
 
-        /* 牌陣與註解 */
-        .spread { display: flex; justify-content: center; gap: 10px; margin: 30px 0; }
+        /* 牌陣與註解模組 */
+        .spread { display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
         .card-box { width: var(--card-w); }
-        .label { font-size: 0.75rem; color: var(--gold); margin-bottom: 8px; font-weight: bold; }
-        .card-info { font-size: 0.8rem; margin-top: 10px; color: #fff; min-height: 3em; line-height: 1.4; }
+        .label { font-size: 0.8rem; color: var(--gold); margin-bottom: 5px; font-weight: bold; }
+        .card-info { font-size: 0.8rem; margin-top: 8px; min-height: 2.5em; line-height: 1.4; color: #fff; }
         
-        /* 翻牌模組 */
-        .tarot-inner { width: var(--card-w); height: var(--card-h); position: relative; transform-style: preserve-3d; transition: 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        /* 翻牌動畫核心 */
+        .tarot-inner { width: var(--card-w); height: var(--card-h); position: relative; transform-style: preserve-3d; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
         .tarot-inner.flipped { transform: rotateY(180deg); }
         .tarot-inner.reversed { transform: rotateY(180deg) rotateZ(180deg); }
         .face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 10px; border: 1.5px solid var(--gold); overflow: hidden; }
@@ -31,42 +31,45 @@
         .front { transform: rotateY(180deg); background: #222; }
         .front img { width: 100%; height: 100%; object-fit: cover; }
 
-        #result { background: rgba(255,255,255,0.08); padding: 25px; border-radius: 15px; text-align: left; display: none; line-height: 1.8; border-left: 6px solid var(--gold); max-width: 420px; margin: 20px auto; animation: fadeIn 0.5s; }
-        .action-area { margin-top: 20px; text-align: center; border-top: 1px solid rgba(241,196,15,0.2); padding-top: 15px; }
-        .loading { display: none; color: var(--gold); margin: 20px; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* 解說與對話流 */
+        #chat-area { max-width: 420px; margin: 20px auto; text-align: left; }
+        .message-box { background: rgba(255,255,255,0.08); padding: 18px; border-radius: 15px; border-left: 4px solid var(--gold); margin-bottom: 20px; line-height: 1.8; animation: fadeIn 0.5s ease; }
+        .follow-up-ui { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 15px; border: 1px dashed rgba(241,196,15,0.4); }
+        
+        .loading { display: none; color: var(--gold); margin: 20px; text-align: center; font-style: italic; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <h2 style="color:var(--gold)">🔮 聖三角塔羅：互動占卜</h2>
+    <h2 style="color:var(--gold)">🔮 聖三角塔羅：命運對話</h2>
     
-    <div class="panel">
-        <input type="text" id="q" placeholder="請輸入您的問題..." value="我今日的綜合運勢？">
-        <br>
-        <button id="btn-main" onclick="app.run()">開始占卜</button>
+    <div class="panel" id="input-panel">
+        <input type="text" id="q" placeholder="你想問什麼？" value="我今日的綜合運勢？">
+        <br><br>
+        <button id="btn-draw" onclick="app.run()">開始占卜</button>
     </div>
 
     <div class="spread">
         <div class="card-box">
             <div class="label">過去</div>
             <div class="tarot-inner" id="c0"><div class="face back">✦</div><div class="face front"><img id="img0"></div></div>
-            <div class="card-info" id="info0"></div>
+            <div id="info0" class="card-info"></div>
         </div>
         <div class="card-box">
             <div class="label">現在</div>
             <div class="tarot-inner" id="c1"><div class="face back">✦</div><div class="face front"><img id="img1"></div></div>
-            <div class="card-info" id="info1"></div>
+            <div id="info1" class="card-info"></div>
         </div>
         <div class="card-box">
             <div class="label">未來</div>
             <div class="tarot-inner" id="c2"><div class="face back">✦</div><div class="face front"><img id="img2"></div></div>
-            <div class="card-info" id="info2"></div>
+            <div id="info2" class="card-info"></div>
         </div>
     </div>
 
-    <div id="loader" class="loading">✨ 正在連結宇宙訊息...</div>
-    <div id="result"></div>
+    <div id="loader" class="loading">✨ 正在解構命運能量...</div>
+    <div id="chat-area"></div>
 
 <script>
 const TAROT_MAP = {
@@ -78,56 +81,48 @@ const TAROT_MAP = {
 };
 
 const app = {
+    // 已將你的 Key 直接貼入代碼
     TOKEN: "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",
     history: [],
 
-    UI: {
-        flip: (i, isRev, name) => {
-            const el = document.getElementById(`c${i}`);
-            el.className = 'tarot-inner'; 
-            void el.offsetWidth;
-            el.classList.add(isRev ? 'reversed' : 'flipped');
-            document.getElementById(`info${i}`).innerHTML = `${name}<br><small style="color:${isRev?'#ff6b6b':'#4cd137'}">${isRev?'(逆位)':'(正位)'}</small>`;
-        },
-        reset: () => {
-            for(let i=0; i<3; i++) {
-                document.getElementById(`c${i}`).className = 'tarot-inner';
-                document.getElementById(`info${i}`).innerHTML = '';
-            }
-            document.getElementById('result').style.display = 'none';
-            document.getElementById('q').value = '';
-            app.history = [];
-        }
-    },
-
     run: async function(isFollowUp = false) {
         const qInput = document.getElementById('q');
-        const btn = document.getElementById('btn-main');
-        const resBox = document.getElementById('result');
+        const chatArea = document.getElementById('chat-area');
         const loader = document.getElementById('loader');
-        
+        const btn = document.getElementById('btn-draw');
+
         if(!qInput.value) return alert("請輸入問題");
         
         btn.disabled = true;
         loader.style.display = 'block';
-        if(!isFollowUp) this.UI.reset();
 
         try {
-            let cardNames = [];
-            // 如果是新占卜，則抽牌
             if(!isFollowUp) {
-                const tarotRes = await fetch("https://tarotapi.dev/api/v1/cards/random?n=3");
-                const data = await tarotRes.json();
+                // 第一次占卜：抽牌與翻牌
+                this.history = [];
+                chatArea.innerHTML = "";
+                const res = await fetch("https://tarotapi.dev/api/v1/cards/random?n=3");
+                const data = await res.json();
+                let cardNames = [];
+
                 for(let i=0; i<3; i++) {
                     const card = data.cards[i];
                     const isRev = Math.random() > 0.5;
-                    const cnName = TAROT_MAP[card.name_short] || card.name;
+                    const name = TAROT_MAP[card.name_short] || card.name;
+                    
                     document.getElementById(`img${i}`).src = `https://www.sacred-texts.com/tarot/pkt/img/${card.name_short.toLowerCase()}.jpg`;
-                    this.UI.flip(i, isRev, cnName);
-                    cardNames.push(`${cnName}(${isRev?'逆位':'正位'})`);
+                    const el = document.getElementById(`c${i}`);
+                    el.className = 'tarot-inner';
+                    void el.offsetWidth;
+                    el.classList.add(isRev ? 'reversed' : 'flipped');
+                    
+                    // 顯示牌名與正逆位
+                    document.getElementById(`info${i}`).innerHTML = `${name}<br><small style="color:${isRev?'#ff6b6b':'#4cd137'}">${isRev?'(逆位)':'(正位)'}</small>`;
+                    cardNames.push(`${name}(${isRev?'逆位':'正位'})`);
                 }
                 this.history.push({ role: "user", content: `問題：${qInput.value}。牌陣：過去${cardNames[0]}、現在${cardNames[1]}、未來${cardNames[2]}。` });
             } else {
+                // 追問邏輯
                 this.history.push({ role: "user", content: qInput.value });
             }
 
@@ -137,33 +132,45 @@ const app = {
                 body: JSON.stringify({
                     model: "llama-3.3-70b-versatile",
                     messages: [
-                        { role: "system", content: "你是一位精通塔羅的資深占卜師。請用繁體中文提供充滿啟發性的解讀。如果使用者追問，請延續之前的對話給予建議。" },
+                        { role: "system", content: "你是一位精通塔羅的資深占卜師。請用繁體中文提供充滿啟發性的溫暖解讀。若是追問，請根據之前的對話提供建議。" },
                         ...this.history
-                    ]
+                    ],
+                    temperature: 0.7
                 })
             });
 
             const aiData = await response.json();
+            if(aiData.error) throw new Error(aiData.error.message);
+
             const speech = aiData.choices[0].message.content;
             this.history.push({ role: "assistant", content: speech });
 
-            resBox.innerHTML = `
-                <div style="margin-bottom:15px;">${speech.replace(/\n/g, '<br>')}</div>
-                <div class="action-area">
-                    <button class="btn-outline" onclick="document.getElementById('q').focus(); document.getElementById('q').placeholder='請輸入追問內容...';">我想追問</button>
-                    <button onclick="app.run(true)">送出追問</button>
-                    <button class="btn-outline" onclick="app.UI.reset()">結束並關閉</button>
+            // 更新介面：解說下方顯示追問欄位
+            chatArea.innerHTML = `
+                <div class="message-box">${speech.replace(/\n/g, '<br>')}</div>
+                <div class="follow-up-ui">
+                    <input type="text" id="follow-input" placeholder="對此結果有什麼想追問的嗎？" style="width:100%; margin-bottom:12px; border:none; border-bottom:1px solid var(--gold); background:transparent; color:white; outline:none;">
+                    <div style="display:flex; justify-content: space-between;">
+                        <button style="font-size:0.8rem; background:transparent; color:var(--gold); border:1px solid var(--gold);" onclick="location.reload()">重新占卜</button>
+                        <button style="font-size:0.8rem;" onclick="app.doFollowUp()">送出追問</button>
+                    </div>
                 </div>
             `;
-            resBox.style.display = 'block';
-            resBox.scrollIntoView({ behavior: 'smooth' });
+            chatArea.scrollIntoView({ behavior: 'smooth' });
 
         } catch (err) {
-            alert("宇宙斷訊，請檢查網路或稍後再試。");
+            alert("連線失敗：" + err.message);
         } finally {
             loader.style.display = 'none';
             btn.disabled = false;
         }
+    },
+
+    doFollowUp: function() {
+        const input = document.getElementById('follow-input');
+        if(!input.value) return;
+        document.getElementById('q').value = input.value;
+        this.run(true);
     }
 };
 </script>
