@@ -1,124 +1,14 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Tarot Master</title>
-    <style>
-        :root { --gold: #f1c40f; --night: #0a0a12; }
-        body { background: #121212; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
-        .input-panel { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin-bottom: 20px; }
-        input { width: 80%; background: transparent; border: none; border-bottom: 2px solid var(--gold); color: white; padding: 10px; text-align: center; outline: none; }
-        button { background: var(--gold); color: black; border: none; padding: 12px 30px; border-radius: 25px; font-weight: bold; cursor: pointer; margin-top: 15px; }
-        
-        /* 聖三角版面 */
-        .spread { display: flex; justify-content: center; gap: 10px; margin: 20px 0; }
-        .card-container { width: 100px; }
-        .label { font-size: 0.8rem; color: var(--gold); margin-bottom: 5px; }
-        
-        .card { 
-            width: 100px; height: 170px; position: relative; transform-style: preserve-3d; transition: 0.6s;
-            border-radius: 10px; border: 1px solid var(--gold);
-        }
-        .card.is-flipped { transform: rotateY(180deg); }
-        .card.is-reversed { transform: rotateY(180deg) rotateZ(180deg); }
-        
-        .face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
-        .back { background: #1a1a2e; color: var(--gold); font-size: 2rem; }
-        .front { transform: rotateY(180deg); background: #fdfdfd; color: #333; flex-direction: column; padding: 5px; box-sizing: border-box; }
-        
-        #result-box { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; text-align: left; display: none; line-height: 1.6; border-left: 4px solid var(--gold); }
-        .loading { display: none; color: var(--gold); margin: 10px; }
-    </style>
-</head>
-<body>
-
-    <h2 style="color:var(--gold)">聖三角占卜</h2>
-    
-    <div class="input-panel">
-        <input type="text" id="question" placeholder="輸入您的問題..." value="我近期的運勢？">
-        <br>
-        <button id="drawBtn" onclick="draw()">開啟聖三角</button>
-    </div>
-
-    <div class="spread">
-        <div class="card-container"><div class="label">過去</div><div class="card" id="c0"><div class="face back">✦</div><div class="face front" id="f0"></div></div></div>
-        <div class="card-container"><div class="label">現在</div><div class="card" id="c1"><div class="face back">✦</div><div class="face front" id="f1"></div></div></div>
-        <div class="card-container"><div class="label">未來</div><div class="card" id="c2"><div class="face back">✦</div><div class="face front" id="f2"></div></div></div>
-    </div>
-
-    <div class="loading" id="loader">正在連結宇宙訊息...</div>
-    <div id="result-box"></div>
-
-<script>
-    const G_KEY = "AIzaSyBLBoOPlVbp43IgiL3d9mgknBU1F9Yy2oU";
-
-    async function draw() {
-        const q = document.getElementById('question').value;
-        const btn = document.getElementById('drawBtn');
-        const resBox = document.getElementById('result-box');
-        const loader = document.getElementById('loader');
-
-        if (!q) return alert("請輸入問題");
-        btn.disabled = true;
-        resBox.style.display = 'none';
-        
-        try {
-            // 1. 抽牌
-            const res = await fetch("https://tarotapi.dev/api/v1/cards/random?n=3");
-            const data = await res.json();
-            const cards = data.cards;
-
-            let cardInfos = [];
-
-            for(let i=0; i<3; i++) {
-                const isRev = Math.random() > 0.5;
-                const cardNode = document.getElementById(`c${i}`);
-                const faceNode = document.getElementById(`f${i}`);
-                
-                // 顯示文字代替圖片，防止圖片讀不到變成問號
-                faceNode.innerHTML = `<b style="font-size:0.7rem">${cards[i].name}</b><br><small>${isRev?'(逆位)':'(正位)'}</small>`;
-                
-                cardNode.classList.remove('is-flipped', 'is-reversed');
-                setTimeout(() => {
-                    cardNode.classList.add(isRev ? 'is-reversed' : 'is-flipped');
-                }, i * 200);
-
-                cardInfos.push(`${["過去","現在","未來"][i]}抽中${cards[i].name}(${isRev?'逆位':'正位'})`);
-            }
-
-            // 2. Gemini 解析
-            loader.style.display = 'block';
-            const reading = await getAIReading(q, cardInfos.join("，"));
-            
-            resBox.innerHTML = `<h4 style="color:var(--gold);margin-top:0">占卜結果：</h4>${reading}`;
-            resBox.style.display = 'block';
-
-        } catch (err) {
-            resBox.innerHTML = `<span style="color:red">連線失敗：${err.message}</span><br><br>請確認是否開啟 VPN（若在限制區域）並確保 API Key 已啟用。`;
-            resBox.style.display = 'block';
-        } finally {
-            loader.style.display = 'none';
-            btn.disabled = false;
-        }
-    }
-
-    async function getAIReading(q, cardStr) {
-        // 使用最相容的 v1beta1 路徑
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${G_KEY}`;
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: `你是一位專業塔羅師。問題：${q}。牌陣：${cardStr}。請給予 200 字解讀。` }] }]
-            })
-        });
-
-        const json = await response.json();
-        if (json.error) throw new Error(json.error.message);
-        return json.candidates[0].content.parts[0].text;
-    }
-</script>
-</body>
-</html>
+curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyCuzCXkCgNznA_BGVVo8TIaD7HnS1tkcMI" \
+  -H 'Content-Type: application/json' \
+  -X POST \
+  -d '{
+    "contents": [
+      {
+        "parts": [
+          {
+            "text": "Explain how AI works in a few words"
+          }
+        ]
+      }
+    ]
+  }'
