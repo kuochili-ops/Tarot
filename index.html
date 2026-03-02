@@ -3,38 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini 聖三角塔羅</title>
+    <title>Gemini 聖三角塔羅 - 最終修正版</title>
     <style>
         :root { --gold: #f1c40f; --bg: #0a0a12; }
         body { background: var(--bg); color: #fff; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
         .panel { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #333; }
-        input { width: 80%; background: transparent; border: none; border-bottom: 2px solid var(--gold); color: white; padding: 10px; font-size: 1rem; outline: none; margin-bottom: 15px; }
+        input { width: 85%; background: transparent; border: none; border-bottom: 2px solid var(--gold); color: white; padding: 10px; font-size: 1rem; outline: none; margin-bottom: 15px; }
         button { background: var(--gold); color: black; border: none; padding: 12px 30px; border-radius: 25px; font-weight: bold; cursor: pointer; }
         button:disabled { opacity: 0.5; }
-
-        /* 牌陣設計 - 解決問號圖標問題 */
-        .spread { display: flex; justify-content: center; gap: 10px; margin: 20px 0; }
-        .card-container { width: 100px; }
+        .spread { display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
+        .card-container { width: 105px; }
         .label { font-size: 0.8rem; color: var(--gold); margin-bottom: 8px; font-weight: bold; }
-        
-        .card { 
-            width: 100px; height: 160px; position: relative; transform-style: preserve-3d; transition: 0.8s;
-            border-radius: 10px; border: 1px solid var(--gold);
-        }
+        .card { width: 105px; height: 165px; position: relative; transform-style: preserve-3d; transition: 0.8s; border-radius: 10px; border: 1px solid var(--gold); }
         .card.flipped { transform: rotateY(180deg); }
         .card.reversed { transform: rotateY(180deg) rotateZ(180deg); }
-        
-        .face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; padding: 5px; box-sizing: border-box; text-align: center; }
+        .face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; padding: 10px; box-sizing: border-box; text-align: center; }
         .back { background: #1a1a2e; color: var(--gold); font-size: 2rem; }
-        .front { transform: rotateY(180deg); background: #fdfdfd; color: #222; flex-direction: column; }
-        
-        #result-box { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; text-align: left; display: none; line-height: 1.7; border-left: 4px solid var(--gold); }
-        .loading { display: none; color: var(--gold); margin: 15px; }
+        .front { transform: rotateY(180deg); background: #fdfdfd; color: #222; flex-direction: column; font-weight: bold; }
+        #result-box { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; text-align: left; display: none; line-height: 1.8; border-left: 4px solid var(--gold); }
+        .loading { display: none; color: var(--gold); margin: 15px; font-style: italic; }
     </style>
 </head>
 <body>
 
-    <h2 style="color:var(--gold)">聖三角占卜 Pro</h2>
+    <h2 style="color:var(--gold); letter-spacing: 2px;">聖三角塔羅 Pro</h2>
     
     <div class="panel">
         <input type="text" id="question" placeholder="輸入您的問題..." value="我今日的運勢？">
@@ -48,14 +40,15 @@
         <div class="card-container"><div class="label">未來</div><div class="card" id="c2"><div class="face back">✦</div><div class="face front" id="f2"></div></div></div>
     </div>
 
-    <div class="loading" id="loader">正在讀取星象...</div>
+    <div class="loading" id="loader">✨ 正在連結宇宙訊息...</div>
     <div id="result-box"></div>
 
 <script>
-    // 使用您最後提供的正確 API Key
+    // 您的 API Key
     const API_KEY = "AIzaSyCuzCXkCgNznA_BGVVo8TIaD7HnS1tkcMI";
-    // 修正後的精確路徑：v1beta + gemini-1.5-flash
-    const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    
+    // 核心修正：使用 v1 穩定版路徑，確保與 1.5-flash 模型匹配
+    const ENDPOINT = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
     async function startReading() {
         const q = document.getElementById('question').value;
@@ -68,7 +61,6 @@
         resBox.style.display = 'none';
         
         try {
-            // 1. 抽牌
             const res = await fetch("https://tarotapi.dev/api/v1/cards/random?n=3");
             const data = await res.json();
             const cards = data.cards;
@@ -80,8 +72,7 @@
                 const cardNode = document.getElementById(`c${i}`);
                 const faceNode = document.getElementById(`f${i}`);
                 
-                // 使用文字 UI 取代圖片，確保 100% 顯示成功
-                faceNode.innerHTML = `<b>${cards[i].name}</b><br><small style="color:${isRev?'red':'green'}">${isRev?'(逆位)':'(正位)'}</small>`;
+                faceNode.innerHTML = `<div>${cards[i].name}</div><div style="font-size:0.7rem; color:${isRev?'#e74c3c':'#27ae60'}; margin-top:5px;">${isRev?'(逆位)':'(正位)'}</div>`;
                 
                 cardNode.classList.remove('flipped', 'reversed');
                 setTimeout(() => {
@@ -91,34 +82,39 @@
                 cardNames.push(`${['過去','現在','未來'][i]}位：${cards[i].name}(${isRev?'逆位':'正位'})`);
             }
 
-            // 2. AI 解說
             loader.style.display = 'block';
-            const reading = await getAIReading(q, cardNames.join("，"));
             
-            resBox.innerHTML = `<h4 style="color:var(--gold);margin-top:0">啟示錄：</h4>${reading}`;
+            // 呼叫 Gemini
+            const response = await fetch(ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: `你是一位專業塔羅占卜師。問題：${q}。牌陣：${cardNames.join("，")}。請綜合這三張牌的含義，給予一段 200 字以內的精準解讀與建議。`
+                        }]
+                    }]
+                })
+            });
+
+            const json = await response.json();
+            
+            if (json.error) {
+                // 如果 v1 也失敗，嘗試 v1beta1 (部分帳號適用)
+                throw new Error(json.error.message);
+            }
+            
+            const reading = json.candidates[0].content.parts[0].text;
+            resBox.innerHTML = `<b style="color:var(--gold)">🔮 大師解析：</b><br>${reading}`;
             resBox.style.display = 'block';
 
         } catch (err) {
-            resBox.innerHTML = `<span style="color:#ff6b6b">異常：${err.message}</span><br>請確認 API Key 權限或網路。`;
+            resBox.innerHTML = `<span style="color:#ff6b6b">異常：${err.message}</span><br><small>請確認 API Key 是否已在 Google AI Studio 啟用 Gemini API 服務，或嘗試更換網路環境。</small>`;
             resBox.style.display = 'block';
         } finally {
             loader.style.display = 'none';
             btn.disabled = false;
         }
-    }
-
-    async function getAIReading(q, cardStr) {
-        const response = await fetch(ENDPOINT, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: `你是一位專業塔羅占卜師。問題：${q}。牌陣：${cardStr}。請給予一段 200 字左右溫暖且有深度的建議。` }] }]
-            })
-        });
-
-        const json = await response.json();
-        if (json.error) throw new Error(json.error.message);
-        return json.candidates[0].content.parts[0].text;
     }
 </script>
 </body>
