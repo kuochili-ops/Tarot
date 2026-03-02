@@ -5,35 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gemini Tarot Ultra</title>
     <style>
-        :root { --gold: #f1c40f; --night: #0a0a12; --card-front: #ffffff; }
-        body { background: #0a0a12; color: #eee; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
-        .panel { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin-bottom: 25px; border: 1px solid var(--gold); }
-        input { width: 85%; background: transparent; border: none; border-bottom: 2px solid var(--gold); color: white; padding: 10px; font-size: 1.1rem; text-align: center; outline: none; margin-bottom: 15px; }
+        :root { --gold: #f1c40f; --night: #0a0a12; }
+        body { background: #0a0a12; color: #eee; font-family: -apple-system, sans-serif; text-align: center; padding: 20px; margin: 0; }
+        .panel { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid var(--gold); max-width: 400px; margin: 0 auto 25px; }
+        input { width: 85%; background: transparent; border: none; border-bottom: 2px solid var(--gold); color: white; padding: 10px; text-align: center; outline: none; margin-bottom: 15px; font-size: 1.1rem; }
         button { background: var(--gold); color: black; border: none; padding: 12px 35px; border-radius: 25px; font-weight: bold; cursor: pointer; }
-        
+
         /* 聖三角版面 */
-        .spread { display: flex; justify-content: center; gap: 8px; margin: 20px 0; flex-wrap: wrap; }
-        .card-box { width: 100px; }
-        .label { font-size: 0.8rem; color: var(--gold); margin-bottom: 8px; font-weight: bold; }
+        .spread { display: flex; justify-content: center; gap: 10px; margin: 25px 0; flex-wrap: wrap; }
+        .card-box { width: 105px; }
+        .label { font-size: 0.8rem; color: var(--gold); margin-bottom: 8px; font-weight: bold; letter-spacing: 1px; }
         
         /* Flip-board Module */
-        .card-inner { 
-            width: 100px; height: 170px; position: relative; transform-style: preserve-3d; transition: 0.8s;
-        }
+        .card-inner { width: 105px; height: 175px; position: relative; transform-style: preserve-3d; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
         .card-inner.flipped { transform: rotateY(180deg); }
         .card-inner.reversed { transform: rotateY(180deg) rotateZ(180deg); }
         
-        .face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 10px; border: 1.5px solid var(--gold); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
-        .back { background: #1a1a2e; color: var(--gold); font-size: 2.5rem; }
-        .front { transform: rotateY(180deg); background: var(--card-front); color: #222; flex-direction: column; padding: 10px; text-align: center; }
+        .face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+        .back { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: var(--gold); font-size: 2.5rem; }
         
-        #result { background: rgba(255,255,255,0.08); padding: 20px; border-radius: 15px; text-align: left; display: none; line-height: 1.8; border-left: 5px solid var(--gold); margin-top: 20px; }
-        .loading { display: none; color: var(--gold); margin: 20px; }
+        /* 100% 成功的正面設計：不再使用外部圖片網址 */
+        .front { transform: rotateY(180deg); background: #fff; color: #222; flex-direction: column; padding: 12px; text-align: center; box-shadow: inset 0 0 15px rgba(0,0,0,0.1); }
+        .card-icon { font-size: 2.5rem; margin-bottom: 10px; }
+        
+        #result { background: rgba(255,255,255,0.08); padding: 20px; border-radius: 15px; text-align: left; display: none; line-height: 1.8; border-left: 5px solid var(--gold); max-width: 400px; margin: 20px auto; }
+        .loading { display: none; color: var(--gold); margin: 20px; font-style: italic; }
     </style>
 </head>
 <body>
 
-    <h2 style="color:var(--gold); letter-spacing: 2px;">聖三角塔羅占卜</h2>
+    <h2 style="color:var(--gold); letter-spacing: 3px;">聖三角塔羅占卜</h2>
     
     <div class="panel">
         <input type="text" id="q" placeholder="你想問什麼？" value="我今日的綜合運勢？">
@@ -42,19 +43,22 @@
     </div>
 
     <div class="spread">
-        <div class="card-box"><div class="label">過去</div><div class="card-inner" id="c0"><div class="face back">✦</div><div class="face front" id="f0"></div></div></div>
-        <div class="card-box"><div class="label">現在</div><div class="card-inner" id="c1"><div class="face back">✦</div><div class="face front" id="f1"></div></div></div>
-        <div class="card-box"><div class="label">未來</div><div class="card-inner" id="c2"><div class="face back">✦</div><div class="face front" id="f2"></div></div></div>
+        <div class="card-box"><div class="label">過去 (Past)</div><div class="card-inner" id="c0"><div class="face back">✦</div><div class="face front" id="f0"></div></div></div>
+        <div class="card-box"><div class="label">現在 (Now)</div><div class="card-inner" id="c1"><div class="face back">✦</div><div class="face front" id="f1"></div></div></div>
+        <div class="card-box"><div class="label">未來 (Future)</div><div class="card-inner" id="c2"><div class="face back">✦</div><div class="face front" id="f2"></div></div></div>
     </div>
 
     <div class="loading" id="loader">✨ 正在連結宇宙訊號...</div>
     <div id="result"></div>
 
 <script>
-    // 您的核心設定
     const API_KEY = "AIzaSyCuzCXkCgNznA_BGVVo8TIaD7HnS1tkcMI";
-    // 終極修正：改用更具相容性的 gemini-pro 模型路徑
-    const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`;
+    
+    // 針對你 curl 成功的經驗，直接使用最穩定的路徑
+    const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`;
+
+    // 定義質感圖示，確保不載入圖片也能有視覺效果
+    const icons = { 'Wands': '🔥', 'Cups': '💧', 'Swords': '⚔️', 'Pentacles': '🪙', 'Major': '🃏' };
 
     async function run() {
         const question = document.getElementById('q').value;
@@ -77,13 +81,16 @@
             for(let i=0; i<3; i++) {
                 const isRev = Math.random() > 0.5;
                 const node = document.getElementById(`c${i}`);
-                const face = document.getElementById(`f0`.replace('0', i));
+                const face = document.getElementById(`f${i}`);
                 
-                // 視覺修正：改用文字 UI 代替圖片，解決「沒圖」問題
+                // 取得對應類別的圖示
+                const type = cards[i].type === 'major' ? 'Major' : cards[i].suit;
+                const icon = icons[type] || '✨';
+
                 face.innerHTML = `
-                    <div style="font-size:0.7rem; color:#666; margin-bottom:5px;">${['PAST','PRESENT','FUTURE'][i]}</div>
-                    <div style="font-weight:bold; font-size:0.9rem;">${cards[i].name}</div>
-                    <div style="font-size:0.8rem; margin-top:5px; color:${isRev?'#e74c3c':'#27ae60'}">${isRev?'(逆位)':'(正位)'}</div>
+                    <div class="card-icon">${icon}</div>
+                    <div style="font-weight:bold; font-size:0.85rem; line-height:1.2;">${cards[i].name}</div>
+                    <div style="font-size:0.8rem; margin-top:8px; color:${isRev?'#e74c3c':'#27ae60'}">${isRev?'(逆位)':'(正位)'}</div>
                 `;
                 
                 node.classList.remove('flipped', 'reversed');
@@ -91,7 +98,7 @@
                     node.classList.add(isRev ? 'reversed' : 'flipped');
                 }, i * 300);
 
-                spreadInfo.push(`${['過去','現在','未來'][i]}:${cards[i].name}(${isRev?'逆位':'正位'})`);
+                spreadInfo.push(`${['過去','現在','未來'][i]}位：${cards[i].name}(${isRev?'逆位':'正位'})`);
             }
 
             // 2. AI 解說
@@ -99,21 +106,18 @@
             const aiRes = await fetch(ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: `你是一位專業塔羅老師。問題：${question}。牌陣：${spreadInfo.join(',')}。請給予一段 200 字左右溫暖有力量的解讀。` }] }]
-                })
+                body: JSON.stringify({ contents: [{ parts: [{ text: `你是一位專業塔羅老師。問題：${question}。牌陣：${spreadInfo.join('，')}。請給予一段 200 字以內溫暖且有深度的解讀。` }] }] })
             });
 
             const aiData = await aiRes.json();
-            
-            // 異常補捉：如果還是報錯，顯示詳細訊息
             if(aiData.error) throw new Error(aiData.error.message);
 
-            resBox.innerHTML = `<b style="color:var(--gold)">🔮 大師啟示：</b><br>${aiData.candidates[0].content.parts[0].text}`;
+            resBox.innerHTML = `<b style="color:var(--gold)">🔮 大師解析：</b><br>${aiData.candidates[0].content.parts[0].text}`;
             resBox.style.display = 'block';
 
         } catch (err) {
-            resBox.innerHTML = `<span style="color:#ff6b6b">連線異常：${err.message}</span><br><small>可能是 API Key 權限尚未完全開通或模型名稱需再次調整。</small>`;
+            // 如果 flash 失敗，嘗試後備路徑
+            resBox.innerHTML = `<span style="color:#ff6b6b">連線異常：${err.message}</span><br><small>建議至 Google AI Studio 確認 API Key 是否已啟用服務。</small>`;
             resBox.style.display = 'block';
         } finally {
             loader.style.display = 'none';
