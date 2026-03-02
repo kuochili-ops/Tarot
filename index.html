@@ -1,14 +1,136 @@
-curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyCuzCXkCgNznA_BGVVo8TIaD7HnS1tkcMI" \
-  -H 'Content-Type: application/json' \
-  -X POST \
-  -d '{
-    "contents": [
-      {
-        "parts": [
-          {
-            "text": "Explain how AI works in a few words"
-          }
-        ]
-      }
-    ]
-  }'
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Tarot Pro</title>
+    <style>
+        :root { --gold: #f1c40f; --night: #0a0a12; --accent: #2c3e50; }
+        body { background: radial-gradient(circle at center, #1a1a2e 0%, #0a0a12 100%); color: #eee; font-family: -apple-system, "Microsoft JhengHei", sans-serif; text-align: center; margin: 0; padding: 20px; }
+        .app-container { max-width: 500px; margin: 0 auto; }
+        
+        /* 輸入與按鈕 */
+        .panel { background: rgba(255,255,255,0.07); padding: 25px; border-radius: 20px; border: 1px solid rgba(241, 196, 15, 0.2); backdrop-filter: blur(10px); margin-bottom: 30px; }
+        input { width: 90%; background: transparent; border: none; border-bottom: 2px solid var(--gold); color: white; padding: 12px; font-size: 1.1rem; text-align: center; outline: none; margin-bottom: 20px; }
+        button { background: linear-gradient(135deg, #f1c40f, #d4af37); color: black; border: none; padding: 12px 40px; border-radius: 50px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(241,196,15,0.3); }
+        button:disabled { filter: grayscale(1); opacity: 0.6; }
+
+        /* 聖三角牌陣 (Flip-board Module) */
+        .spread { display: flex; justify-content: center; gap: 12px; margin: 25px 0; }
+        .card-slot { width: 105px; }
+        .label { font-size: 0.8rem; color: var(--gold); margin-bottom: 8px; font-weight: bold; letter-spacing: 1px; }
+        
+        .card { 
+            width: 105px; height: 175px; position: relative; transform-style: preserve-3d; transition: 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        .card.is-flipped { transform: rotateY(180deg); }
+        .card.is-reversed { transform: rotateY(180deg) rotateZ(180deg); }
+        
+        .face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px; border: 1.5px solid var(--gold); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+        .back { background: #16213e; color: var(--gold); font-size: 2.5rem; box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
+        .front { transform: rotateY(180deg); background: #fdfdfd; color: #222; flex-direction: column; padding: 10px; text-align: center; }
+        
+        /* 結果區 */
+        #result { background: rgba(255,255,255,0.08); padding: 25px; border-radius: 20px; text-align: left; display: none; line-height: 1.8; border-left: 5px solid var(--gold); animation: fadeIn 0.8s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .loading { display: none; color: var(--gold); margin: 20px; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <h2 style="color:var(--gold); letter-spacing: 4px;">TAROT INSIGHT</h2>
+    
+    <div class="panel">
+        <input type="text" id="userQ" placeholder="輸入你想探索的問題..." value="我今日的整體運勢？">
+        <br>
+        <button id="drawBtn" onclick="executeReading()">開啟聖三角</button>
+    </div>
+
+    <div class="spread">
+        <div class="card-slot"><div class="label">過去</div><div class="card" id="c0"><div class="face back">✦</div><div class="face front" id="f0"></div></div></div>
+        <div class="card-slot"><div class="label">現在</div><div class="card" id="c1"><div class="face back">✦</div><div class="face front" id="f1"></div></div></div>
+        <div class="card-slot"><div class="label">未來</div><div class="card" id="c2"><div class="face back">✦</div><div class="face front" id="f2"></div></div></div>
+    </div>
+
+    <div class="loading" id="loader">✨ 正在讀取星象訊號...</div>
+    <div id="result"></div>
+</div>
+
+<script>
+    // 使用你測試成功的 API Key
+    const API_KEY = "AIzaSyCuzCXkCgNznA_BGVVo8TIaD7HnS1tkcMI";
+    // 使用你 curl 成功的正確模型路徑
+    const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`;
+
+    async function executeReading() {
+        const question = document.getElementById('userQ').value;
+        const btn = document.getElementById('drawBtn');
+        const resDiv = document.getElementById('result');
+        const loader = document.getElementById('loader');
+
+        if(!question) return alert("請輸入問題");
+
+        btn.disabled = true;
+        resDiv.style.display = 'none';
+        loader.style.display = 'block';
+
+        try {
+            // 1. 抽取三張牌 (聖三角)
+            const tarotApi = await fetch("https://tarotapi.dev/api/v1/cards/random?n=3");
+            const data = await tarotApi.json();
+            const cards = data.cards;
+
+            let cardResults = [];
+
+            for(let i=0; i<3; i++) {
+                const isReversed = Math.random() > 0.5;
+                const cardEl = document.getElementById(`c${i}`);
+                const faceEl = document.getElementById(`f${i}`);
+                
+                // 為了防止圖片讀取失敗，改用文字標籤設計
+                faceEl.style.borderTop = `6px solid ${['#4facfe','#f093fb','#43e97b'][i]}`;
+                faceEl.innerHTML = `
+                    <div style="font-size:0.65rem; color:#888; margin-bottom:5px;">${['PAST','PRESENT','FUTURE'][i]}</div>
+                    <div style="font-weight:bold; font-size:0.85rem; color:#333;">${cards[i].name}</div>
+                    <div style="font-size:0.75rem; color:${isReversed?'#e74c3c':'#27ae60'}; margin-top:5px;">${isReversed?'(逆位)':'(正位)'}</div>
+                `;
+                
+                cardEl.classList.remove('is-flipped', 'is-reversed');
+                setTimeout(() => {
+                    cardEl.classList.add(isReversed ? 'is-reversed' : 'is-flipped');
+                }, i * 300);
+
+                cardResults.push(`${['過去','現在','未來'][i]}位置：${cards[i].name}(${isReversed?'逆位':'正位'})`);
+            }
+
+            // 2. 請求 Gemini AI 解析
+            const promptText = `你是一位專業塔羅大師。
+            問題：${question}
+            牌陣：${cardResults.join('，')}
+            請針對這三張牌的時序關係（過去、現在、未來）進行綜合解讀，並給予一段約 200 字且溫暖有力量的建議。`;
+
+            const aiResponse = await fetch(ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+            });
+
+            const aiData = await aiResponse.json();
+            if(aiData.error) throw new Error(aiData.error.message);
+
+            const resultText = aiData.candidates[0].content.parts[0].text;
+            resDiv.innerHTML = `<b style="color:var(--gold); font-size:1.1rem;">🔮 啟示錄：</b><br>${resultText}`;
+            resDiv.style.display = 'block';
+
+        } catch (err) {
+            resDiv.innerHTML = `<span style="color:#ff6b6b;">連線異常：${err.message}</span><br><small>請確認網路狀況或 API 權限。</small>`;
+            resDiv.style.display = 'block';
+        } finally {
+            loader.style.display = 'none';
+            btn.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>
