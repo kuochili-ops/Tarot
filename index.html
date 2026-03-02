@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Tarot Master</title>
+    <style>
+        :root {
+            --gold: #f1c40f;
+            --purple: #2c003e;
+            --night: #0a0a12;
+            --glass: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            background: radial-gradient(circle at center, #1e1e2f 0%, #0a0a12 100%);
+            color: #f0f0f0;
+            font-family: 'PingFang TC', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-weight: 300;
+            letter-spacing: 5px;
+            color: var(--gold);
+            text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+            margin-bottom: 30px;
+        }
+
+        /* Input Section */
+        .input-panel {
+            background: var(--glass);
+            border: 1px solid rgba(241, 196, 15, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        input {
+            width: 90%;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid var(--gold);
+            color: #fff;
+            padding: 10px;
+            font-size: 1.1rem;
+            text-align: center;
+            outline: none;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #d4af37, #f1c40f);
+            color: #000;
+            border: none;
+            padding: 12px 40px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 5px 15px rgba(241, 196, 15, 0.3);
+        }
+
+        button:hover { transform: translateY(-2px) scale(1.05); }
+        button:disabled { filter: grayscale(1); cursor: wait; }
+
+        /* Flip-board Module (Personalized) */
+        .card-wrapper {
+            perspective: 1000px;
+            width: 200px;
+            height: 350px;
+            margin: 40px auto;
+        }
+
+        .tarot-card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tarot-card.is-flipped { transform: rotateY(180deg); }
+        .tarot-card.is-reversed { transform: rotateY(180deg) rotateZ(180deg); }
+
+        .face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            border: 2px solid var(--gold);
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+
+        .back {
+            background: #1a1a2e url('https://www.transparenttextures.com/patterns/constellation.png');
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--gold);
+        }
+
+        .front {
+            background: #000;
+            transform: rotateY(180deg);
+        }
+
+        .front img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Result Panel */
+        #result-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: var(--glass);
+            border-radius: 15px;
+            text-align: left;
+            display: none;
+            animation: fadeIn 1s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .loader {
+            display: none;
+            margin: 20px auto;
+            border: 3px solid transparent;
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            width: 30px; height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <h1>TAROT AI</h1>
+    
+    <div class="input-panel">
+        <input type="text" id="question" placeholder="輸入您的困惑..." autocomplete="off">
+        <br>
+        <button id="drawBtn" onclick="draw()">抽取牌卡</button>
+    </div>
+
+    <div class="card-wrapper">
+        <div class="tarot-card" id="cardNode">
+            <div class="face back">✦</div>
+            <div class="face front">
+                <img id="cardImg" src="" alt="card">
+            </div>
+        </div>
+    </div>
+
+    <div class="loader" id="loader"></div>
+
+    <div id="result-box">
+        <h2 id="resName" style="color: var(--gold); margin: 0 0 10px 0; font-size: 1.2rem;"></h2>
+        <div id="resText" style="line-height: 1.8; color: #ddd; font-size: 0.95rem;"></div>
+    </div>
+</div>
+
+<script>
+    const G_KEY = "AIzaSyBLBoOPlVbp43IgiL3d9mgknBU1F9Yy2oU";
+    const API_URL = "https://tarotapi.dev/api/v1/cards/random?n=1";
+
+    async function draw() {
+        const q = document.getElementById('question').value;
+        const btn = document.getElementById('drawBtn');
+        const cardNode = document.getElementById('cardNode');
+        const loader = document.getElementById('loader');
+        const resBox = document.getElementById('result-box');
+
+        if (!q) return alert("請先告知您的問題");
+
+        // UI Reset
+        btn.disabled = true;
+        resBox.style.display = 'none';
+        cardNode.classList.remove('is-flipped', 'is-reversed');
+
+        try {
+            // 1. Fetch Tarot Data
+            const response = await fetch(API_URL);
+            const data = await response.json();
+            const card = data.cards[0];
+            const isReversed = Math.random() > 0.5;
+            
+            // 2. Set Image (Using Sacred Texts Repo)
+            document.getElementById('cardImg').src = `https://www.sacred-texts.com/tarot/xr/img/${card.name_short}.jpg`;
+
+            // 3. Animation
+            setTimeout(() => {
+                cardNode.classList.add(isReversed ? 'is-reversed' : 'is-flipped');
+            }, 100);
+
+            // 4. Gemini AI Reading
+            loader.style.display = 'block';
+            const reading = await getReading(q, card, isReversed);
+            
+            // 5. Display Result
+            document.getElementById('resName').innerText = `${card.name} (${isReversed ? '逆位' : '正位'})`;
+            document.getElementById('resText').innerText = reading;
+            
+            loader.style.display = 'none';
+            resBox.style.display = 'block';
+
+        } catch (err) {
+            console.error(err);
+            alert("連結宇宙訊息時出錯，請檢查網路。");
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function getReading(q, card, isRev) {
+        const pos = isRev ? "逆位" : "正位";
+        const meaning = isRev ? card.meaning_rev : card.meaning_up;
+        
+        const prompt = `你是一位專業且直覺敏銳的塔羅占卜師。
+        問題：${q}
+        抽中：${card.name} (${pos})
+        牌義概要：${meaning}
+        請針對問題進行解說。結合牌面的象徵與現代生活情境，給予溫暖、有建設性的建議，約 200 字左右。`;
+
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${G_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
+        });
+
+        const json = await res.json();
+        return json.candidates[0].content.parts[0].text;
+    }
+</script>
+
+</body>
+</html>
