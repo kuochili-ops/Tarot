@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tarot Insight v17.0</title>
+    <title>Tarot Insight Groq v18.0</title>
     <style>
         :root { --gold: #f1c40f; --night: #0a0a12; }
         body { background: var(--night); color: #eee; font-family: sans-serif; text-align: center; padding: 20px; margin: 0; }
@@ -30,10 +30,10 @@
 </head>
 <body>
 
-    <h2 style="color:var(--gold)">聖三角塔羅 (極致相容版)</h2>
+    <h2 style="color:var(--gold)">聖三角塔羅 (Groq 極速版)</h2>
     
     <div class="panel">
-        <input type="text" id="q" placeholder="請輸入您的問題..." value="我今日的綜合運勢？">
+        <input type="text" id="q" placeholder="你想問什麼？" value="我今日的綜合運勢？">
         <br>
         <button id="btn" onclick="app.run()">開始占卜</button>
     </div>
@@ -44,12 +44,12 @@
         <div class="card-box"><div class="label">未來</div><div class="tarot-inner" id="c2"><div class="face back">✦</div><div class="face front"><img id="img2"></div></div></div>
     </div>
 
-    <div id="loader" class="loading">✨ 正在連結宇宙訊號...</div>
+    <div id="loader" class="loading">⚡ 正在連結高效能星鏈...</div>
     <div id="result"></div>
 
 <script>
 /**
- * 完整牌面名稱註解 (Major Arcana)
+ * 完整牌面註解
  */
 const TAROT_MAP = {
     "ar00": "愚者", "ar01": "魔術師", "ar02": "女祭司", "ar03": "皇后", "ar04": "皇帝",
@@ -60,11 +60,8 @@ const TAROT_MAP = {
 };
 
 const app = {
-    // ⚠ 請在此填入你的 Google API Key
-    API_KEY: "AIzaSyATSUCodL_2qQVtRNjDyLSLlANWlDZCDtQ",
-    
-    // 改用明確的 001 版本路徑
-    API_URL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-001:generateContent",
+    // ⚠ 請在此填入你的 Groq API Key (gsk_...)
+    API_KEY: "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",
 
     UI: {
         flip: (i, isRev) => {
@@ -97,39 +94,39 @@ const app = {
                 const card = data.cards[i];
                 const isRev = Math.random() > 0.5;
                 const cnName = TAROT_MAP[card.name_short] || card.name;
-                
                 document.getElementById(`img${i}`).src = `https://www.sacred-texts.com/tarot/pkt/img/${card.name_short.toLowerCase()}.jpg`;
                 this.UI.flip(i, isRev);
                 cardNames.push(`${cnName}(${isRev?'逆位':'正位'})`);
             }
 
-            // 2. AI 請求
+            // 2. Groq AI 請求
             loader.style.display = 'block';
-            const prompt = `你是一位專業塔羅師。問題：${document.getElementById('q').value}。牌陣：過去是${cardNames[0]}、現在是${cardNames[1]}、未來是${cardNames[2]}。請給予約 150 字的繁體中文溫暖解讀。`;
-
-            const response = await fetch(`${this.API_URL}?key=${this.API_KEY}`, {
+            
+            const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                headers: {
+                    "Authorization": `Bearer ${this.API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: "llama-3.3-70b-specdec", // 目前最強且穩定的模型
+                    messages: [
+                        { role: "system", content: "你是一位精通偉特塔羅的繁體中文占卜師。" },
+                        { role: "user", content: `問題：${document.getElementById('q').value}。牌陣：過去${cardNames[0]}、現在${cardNames[1]}、未來${cardNames[2]}。請給予約 150 字溫暖的解讀。` }
+                    ]
+                })
             });
 
             const aiData = await response.json();
 
-            // 如果還是 NOT_FOUND，這次我們把完整的錯誤內容印出來診斷
-            if (aiData.error) {
-                throw new Error(`${aiData.error.status}: ${aiData.error.message}`);
-            }
-            
-            if (!aiData.candidates || !aiData.candidates[0].content) {
-                throw new Error("宇宙回傳格式異常，請重新嘗試。");
-            }
+            if (aiData.error) throw new Error(aiData.error.message);
 
-            const speech = aiData.candidates[0].content.parts[0].text;
+            const speech = aiData.choices[0].message.content;
             resBox.innerHTML = `<b style="color:var(--gold)">🔮 大師啟示：</b><br>${speech}`;
             resBox.style.display = 'block';
 
         } catch (err) {
-            resBox.innerHTML = `<span style="color:#ff6b6b">❌ 連線偵測異常：<br>${err.message}</span>`;
+            resBox.innerHTML = `<span style="color:#ff6b6b">❌ 連線異常：<br>${err.message}</span>`;
             resBox.style.display = 'block';
         } finally {
             loader.style.display = 'none';
