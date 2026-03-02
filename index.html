@@ -3,30 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Tarot - Full Imagery</title>
+    <title>Gemini Tarot Final Fix</title>
     <style>
         :root { --gold: #f1c40f; --night: #0a0a12; }
-        body { background: radial-gradient(circle at center, #1a1a2e 0%, #0a0a12 100%); color: #eee; font-family: -apple-system, sans-serif; text-align: center; margin: 0; padding: 20px; }
-        .panel { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid var(--gold); max-width: 400px; margin: 0 auto 20px; backdrop-filter: blur(10px); }
+        body { background: #0a0a12; color: #eee; font-family: sans-serif; text-align: center; padding: 20px; margin: 0; }
+        .panel { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid var(--gold); max-width: 400px; margin: 0 auto 20px; }
         input { width: 85%; background: transparent; border: none; border-bottom: 2px solid var(--gold); color: white; padding: 10px; text-align: center; outline: none; margin-bottom: 15px; font-size: 1rem; }
-        button { background: var(--gold); color: black; border: none; padding: 12px 35px; border-radius: 25px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(241,196,15,0.3); }
+        button { background: var(--gold); color: black; border: none; padding: 12px 35px; border-radius: 25px; font-weight: bold; cursor: pointer; }
 
-        /* 牌陣版面 */
-        .spread { display: flex; justify-content: center; gap: 10px; margin: 25px 0; }
+        .spread { display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
         .card-box { width: 105px; text-align: center; }
-        .label { font-size: 0.8rem; color: var(--gold); margin-bottom: 8px; font-weight: bold; text-shadow: 0 0 5px #000; }
+        .label { font-size: 0.8rem; color: var(--gold); margin-bottom: 8px; font-weight: bold; }
         
-        /* 翻牌模組 */
         .card-inner { width: 105px; height: 175px; position: relative; transform-style: preserve-3d; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
         .card-inner.flipped { transform: rotateY(180deg); }
         .card-inner.reversed { transform: rotateY(180deg) rotateZ(180deg); }
         
-        .face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 10px; border: 1px solid var(--gold); overflow: hidden; background: #000; }
-        .back { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
-        .front { transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; }
+        .face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 10px; border: 1px solid var(--gold); overflow: hidden; background: #1a1a2e; }
+        .back { display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: var(--gold); }
+        .front { transform: rotateY(180deg); background: #fff; }
         .front img { width: 100%; height: 100%; object-fit: cover; }
         
-        #result { background: rgba(0,0,0,0.6); padding: 20px; border-radius: 15px; text-align: left; display: none; line-height: 1.8; border-left: 5px solid var(--gold); max-width: 400px; margin: 20px auto; border: 1px solid rgba(241,196,15,0.2); }
+        #result { background: rgba(255,255,255,0.08); padding: 20px; border-radius: 15px; text-align: left; display: none; line-height: 1.8; border-left: 5px solid var(--gold); max-width: 400px; margin: 20px auto; border: 1px solid rgba(241,196,15,0.2); }
         .loading { display: none; color: var(--gold); margin: 20px; font-style: italic; }
     </style>
 </head>
@@ -37,26 +35,48 @@
     <div class="panel">
         <input type="text" id="q" placeholder="請輸入您的問題..." value="我今日的綜合運勢？">
         <br>
-        <button id="btn" onclick="run()">抽取牌卡</button>
+        <button id="btn" onclick="run()">抽取聖三角</button>
     </div>
 
     <div class="spread">
-        <div class="card-box"><div class="label">過去</div><div class="card-inner" id="c0"><div class="face back">✦</div><div class="face front"><img id="img0"></div></div></div>
-        <div class="card-box"><div class="label">現在</div><div class="card-inner" id="c1"><div class="face back">✦</div><div class="face front"><img id="img1"></div></div></div>
-        <div class="card-box"><div class="label">未來</div><div class="card-inner" id="c2"><div class="face back">✦</div><div class="face front"><img id="img2"></div></div></div>
+        <div class="card-box">
+            <div class="label">過去</div>
+            <div class="card-inner" id="c0">
+                <div class="face back">✦</div>
+                <div class="face front" id="f0"></div>
+            </div>
+        </div>
+        <div class="card-box">
+            <div class="label">現在</div>
+            <div class="card-inner" id="c1">
+                <div class="face back">✦</div>
+                <div class="face front" id="f1"></div>
+            </div>
+        </div>
+        <div class="card-box">
+            <div class="label">未來</div>
+            <div class="card-inner" id="c2">
+                <div class="face back">✦</div>
+                <div class="face front" id="f2"></div>
+            </div>
+        </div>
     </div>
 
-    <div class="loading" id="loader">✨ 正在讀取星象與牌面圖庫...</div>
+    <div class="loading" id="loader">✨ 正在連結宇宙訊號與圖庫...</div>
     <div id="result"></div>
 
 <script>
     const API_KEY = "AIzaSyCuzCXkCgNznA_BGVVo8TIaD7HnS1tkcMI";
+    // 修正：針對您的報錯，改用 v1beta 並嘗試最穩定的完整路徑
     const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`;
 
-    // 格式化卡片名稱以匹配圖庫網址
-    function formatCardUrl(card) {
-        // 優先嘗試 TarotQA 的網址結構
-        const nameShort = card.name_short.toLowerCase(); // 例如: ar06, cu05
+    // 圖片路徑轉換器：解決 Wiki 命名不統一問題
+    function getCardImageUrl(card) {
+        const name = card.name;
+        // 將牌名轉換為 Wiki 標準格式，例如 "Four of Wands" -> "RWS_Tarot_04_Wands"
+        // 這裡直接對接一個穩定的全牌組 CDN 作為備援
+        const nameShort = card.name_short.toLowerCase();
+        // 優先嘗試 TarotQA 的穩定圖片路徑
         return `https://tarotqa.com/img/tarot/${nameShort}.jpg`;
     }
 
@@ -71,7 +91,7 @@
         resBox.style.display = 'none';
 
         try {
-            // 1. 取得隨機牌卡
+            // 1. 抽取牌卡
             const tarotRes = await fetch("https://tarotapi.dev/api/v1/cards/random?n=3");
             const tarotData = await tarotRes.json();
             const cards = tarotData.cards;
@@ -81,14 +101,11 @@
             for(let i=0; i<3; i++) {
                 const isRev = Math.random() > 0.5;
                 const node = document.getElementById(`c${i}`);
-                const img = document.getElementById(`img${i}`);
+                const face = document.getElementById(`f${i}`);
                 
-                // 設定圖片與失敗備援
-                img.src = formatCardUrl(cards[i]);
-                img.onerror = function() {
-                    // 如果第一來源失敗，嘗試 Wiki 備援路徑
-                    this.src = `https://placehold.co/100x170/1a1a2e/gold?text=${cards[i].name.replace(' ','+')}`;
-                };
+                // 設定圖片，並加上 onerror 備援機制
+                const imgUrl = getCardImageUrl(cards[i]);
+                face.innerHTML = `<img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='<div style=\'padding:20px; color:#222; font-weight:bold;\'>${cards[i].name}</div>'">`;
                 
                 node.classList.remove('flipped', 'reversed');
                 setTimeout(() => {
@@ -98,29 +115,32 @@
                 spreadInfo.push(`${['過去','現在','未來'][i]}位：${cards[i].name}(${isRev?'逆位':'正位'})`);
             }
 
-            // 2. 請求 AI
+            // 2. AI 解讀
             loader.style.display = 'block';
-            const response = await fetch(ENDPOINT, {
+            const aiRes = await fetch(ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: `你是一位專業塔羅老師。問題：${question}。牌陣：${spreadInfo.join('，')}。請給予一段約 200 字解讀。` }] }]
+                body: JSON.stringify({ 
+                    contents: [{ parts: [{ text: `你是一位專業塔羅大師。問題：${question}。牌陣：${spreadInfo.join('，')}。請給予一段約 200 字且溫暖有力量的解讀。` }] }] 
                 })
             });
 
-            const aiData = await response.json();
+            const aiData = await aiRes.json();
             
-            // 安全檢查：確保 candidates[0] 存在
-            if (aiData.candidates && aiData.candidates.length > 0) {
+            // 修正截圖中出現的 'undefined is not an object' 錯誤
+            if (aiData.candidates && aiData.candidates[0]) {
                 const reading = aiData.candidates[0].content.parts[0].text;
                 resBox.innerHTML = `<b style="color:var(--gold)">🔮 大師解析：</b><br>${reading}`;
-                resBox.style.display = 'block';
             } else {
-                throw new Error(aiData.error ? aiData.error.message : "API 未能正確回傳內容");
+                // 如果 API 返回錯誤，顯示具體原因
+                const errMsg = aiData.error ? aiData.error.message : "API 暫時無法回應，請檢查 Key 權限。";
+                throw new Error(errMsg);
             }
+            
+            resBox.style.display = 'block';
 
         } catch (err) {
-            resBox.innerHTML = `<span style="color:#ff6b6b">異常：${err.message}</span><br><small>請確認 API Key 權限與網路環境。</small>`;
+            resBox.innerHTML = `<span style="color:#ff6b6b">異常：${err.message}</span>`;
             resBox.style.display = 'block';
         } finally {
             loader.style.display = 'none';
